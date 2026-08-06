@@ -1,5 +1,7 @@
 package com.scanaura.auth.service.impl;
 
+import com.scanaura.auth.dto.LoginRequest;
+import com.scanaura.auth.dto.LoginResponse;
 import com.scanaura.auth.dto.RegisterRequest;
 import com.scanaura.auth.dto.RegisterResponse;
 import com.scanaura.auth.entity.User;
@@ -8,6 +10,7 @@ import com.scanaura.auth.repository.UserRepository;
 import com.scanaura.auth.service.AuthService;
 import com.scanaura.common.constants.AppConstants;
 import com.scanaura.common.enums.UserRole;
+import com.scanaura.common.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,10 @@ public class AuthServiceImpl implements AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final JwtService jwtService;
+
+
+    // Register
     @Override
     public RegisterResponse register(RegisterRequest request) {
 
@@ -62,6 +69,27 @@ public class AuthServiceImpl implements AuthService {
                 savedUser.getMobile()
         );
 
+    }
+
+    // Login
+    @Override
+    public LoginResponse login(LoginRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new BusinessException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BusinessException("Invalid email or password");
+        }
+
+        String token = jwtService.generateToken(user.getEmail());
+
+        return new LoginResponse(
+                token,
+                "Bearer",
+                86400000L
+        );
     }
 
 }

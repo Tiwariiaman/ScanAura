@@ -10,8 +10,8 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
-        <module name="scanaura" />
         <module name="backend" />
+        <module name="scanaura" />
       </profile>
     </annotationProcessing>
   </component>

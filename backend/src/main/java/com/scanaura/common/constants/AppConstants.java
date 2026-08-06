@@ -13,4 +13,8 @@ public final class AppConstants {
     public static final String MOBILE_ALREADY_EXISTS =
             "Mobile number already registered.";
 
+    public static final String LOGIN_SUCCESS = "Login successful.";
+    
+    public static final String INVALID_CREDENTIALS = "Invalid email or password.";
+
 }
