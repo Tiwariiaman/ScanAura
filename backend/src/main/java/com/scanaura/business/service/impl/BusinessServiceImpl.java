@@ -8,6 +8,7 @@ import com.scanaura.business.repository.BusinessRepository;
 import com.scanaura.business.service.BusinessService;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.qr.service.QrService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class BusinessServiceImpl implements BusinessService {
 
     private final BusinessRepository businessRepository;
+    private final QrService qrService;
 
     @Override
     public BusinessResponse createBusiness(BusinessRequest request) {
@@ -50,6 +52,8 @@ public class BusinessServiceImpl implements BusinessService {
         business.setActive(true);
 
         Business savedBusiness = businessRepository.save(business);
+
+        qrService.generateDigitalQr(savedBusiness.getId());
 
         return mapToResponse(savedBusiness);
     }
