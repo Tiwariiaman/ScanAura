@@ -108,18 +108,16 @@ common
 
 ---
 
-# ✅ Current Progress
+## ✅ Completed Modules
 
-- Spring Boot Project Setup
-- PostgreSQL Connected
-- Flyway Configured
-- Base Architecture Created
-- Common Packages Created
-- Base Entity
-- Enums
-- User Entity
-- User Repository
-- GitHub Repository Initialized
+- Authentication (JWT)
+- User Registration
+- User Login
+- Business Profile CRUD
+- Global Exception Handling
+- Validation
+- PostgreSQL
+- Spring Security
 
 ---
 

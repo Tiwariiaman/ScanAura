@@ -1,4 +1,4 @@
-package com.scanaura.auth.exception;
+package com.scanaura.common.exception;
 
 public class BusinessException extends RuntimeException {
 

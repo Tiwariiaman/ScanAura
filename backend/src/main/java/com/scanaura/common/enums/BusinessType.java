@@ -1,12 +1,15 @@
 package com.scanaura.common.enums;
 
 public enum BusinessType {
+
     RESTAURANT,
+
     CAFE,
-    SALON,
-    GYM,
-    CLINIC,
+
+    BAKERY,
+
     GROCERY,
-    RETAIL,
-    OTHER
+
+    FOOD_OUTLET
+
 }

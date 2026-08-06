@@ -5,7 +5,7 @@ import com.scanaura.auth.dto.LoginResponse;
 import com.scanaura.auth.dto.RegisterRequest;
 import com.scanaura.auth.dto.RegisterResponse;
 import com.scanaura.auth.entity.User;
-import com.scanaura.auth.exception.BusinessException;
+import com.scanaura.common.exception.BusinessException;
 import com.scanaura.auth.repository.UserRepository;
 import com.scanaura.auth.service.AuthService;
 import com.scanaura.common.constants.AppConstants;
