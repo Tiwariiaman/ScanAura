@@ -16,4 +16,5 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     boolean existsByBusinessAndName(Business business, String name);
 
+
 }

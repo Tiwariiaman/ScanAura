@@ -31,4 +31,7 @@ public interface CatalogRepository extends JpaRepository<Catalog, UUID> {
             Business business,
             UUID categoryId
     );
+
+
+
 }
