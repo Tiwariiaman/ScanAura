@@ -39,3 +39,8 @@ cloudinary:
   cloud-name: jkkm2fpw
   api-key: "161837288711125"
   api-secret: kZCpwn8LVoPA76hcKN9UExMyt98
+
+gemini:
+  api:
+    key: AQ.Ab8RN6Ktqfq9_7kzM3kUyHIxm-dlAxRKYLDloVPVvNd3R753LQ
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent

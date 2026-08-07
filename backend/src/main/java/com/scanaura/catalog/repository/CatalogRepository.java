@@ -34,4 +34,11 @@ public interface CatalogRepository extends JpaRepository<Catalog, UUID> {
 
 
 
+    void deleteByBusiness(Business business);
+
+    boolean existsByBusinessAndNameIgnoreCase(
+            Business business,
+            String name
+    );
+
 }
