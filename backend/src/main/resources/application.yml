@@ -21,6 +21,12 @@ spring:
     enabled: false
     baseline-on-migrate: true
 
+
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
 server:
   port: 8080
 
@@ -28,3 +34,8 @@ server:
 jwt:
     secret: 1234567890123456789012345678901234567890123456789012345678901234
     expiration: 86400000
+
+cloudinary:
+  cloud-name: jkkm2fpw
+  api-key: "161837288711125"
+  api-secret: kZCpwn8LVoPA76hcKN9UExMyt98
