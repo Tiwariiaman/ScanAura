@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/scanaura
     username: postgres
-    password: 705622
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -32,15 +32,15 @@ server:
 
 
 jwt:
-    secret: 1234567890123456789012345678901234567890123456789012345678901234
+    secret: ${JWT_SECRET}
     expiration: 86400000
 
 cloudinary:
   cloud-name: jkkm2fpw
-  api-key: "161837288711125"
+  api-key: ${CLOUDINARY_API_KEY}
   api-secret: kZCpwn8LVoPA76hcKN9UExMyt98
 
 gemini:
   api:
-    key: AQ.Ab8RN6Ktqfq9_7kzM3kUyHIxm-dlAxRKYLDloVPVvNd3R753LQ
+    key: ${CLOUDINARY_API_SECRET}
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent
