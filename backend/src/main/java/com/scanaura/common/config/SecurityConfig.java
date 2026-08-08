@@ -36,16 +36,28 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+//                        .requestMatchers(
+//                                "/",
+//                                "/api/v1/auth/**",
+//                                "/api/public/**"
+//                        ).permitAll()
                         .requestMatchers(
+                                "/",
                                 "/api/v1/auth/**",
-                                "/api/public/**"
-                        ).permitAll()
+                                "/api/public/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs",
+                                "/webjars/**"
+                                ).permitAll()
 
                         .requestMatchers(
                                 "/api/v1/admin/**"
                         ).hasAuthority("ADMIN")
 
                         .anyRequest().authenticated()
+
 
                 )
 
