@@ -35,11 +35,18 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/public/**"
                         ).permitAll()
+
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        ).hasAuthority("ADMIN")
+
                         .anyRequest().authenticated()
+
                 )
 
                 .addFilterBefore(

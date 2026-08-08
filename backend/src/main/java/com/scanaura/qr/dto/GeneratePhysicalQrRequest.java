@@ -13,4 +13,6 @@ public class GeneratePhysicalQrRequest {
     @Max(value = 1000, message = "Maximum 1000 QR Codes")
     private int count;
 
+
+
 }

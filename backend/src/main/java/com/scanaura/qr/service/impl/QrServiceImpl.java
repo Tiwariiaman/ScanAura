@@ -39,6 +39,7 @@ public class QrServiceImpl implements QrService {
             throw new BusinessException("Digital QR already exists.");
         }
 
+
         QrCode qrCode = new QrCode();
 
         qrCode.setQrCode(
@@ -178,6 +179,12 @@ public class QrServiceImpl implements QrService {
 
     @Override
     public List<QrResponse> generatePhysicalQrCodes(int count) {
+
+        if (count < 1 || count > 1000) {
+            throw new BusinessException(
+                    "QR generation count must be between 1 and 1000."
+            );
+        }
 
         long assigned =
                 qrCodeRepository.countByAssignedTrueAndType(QrType.PHYSICAL);

@@ -27,4 +27,6 @@ public interface SubscriptionRequestRepository
             RequestStatus status
     );
 
+    long countByStatus(RequestStatus status);
+
 }

@@ -12,7 +12,10 @@ import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.subscription.entity.Subscription;
+import com.scanaura.subscription.repository.SubscriptionRepository;
 
+import com.scanaura.subscription.service.SubscriptionValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,9 @@ public class AiServiceImpl implements AiService {
     private final CategoryRepository categoryRepository;
 
     private final CatalogRepository catalogRepository;
+
+    private final SubscriptionValidationService subscriptionValidationService;
+    private final SubscriptionRepository subscriptionRepository;
 
     @Override
     public AiMenuResponse analyzeMenu(MultipartFile file) {
@@ -57,6 +63,9 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public void importMenu(AiImportRequest request) {
+        subscriptionValidationService.validateActiveSubscription();
+
+        subscriptionValidationService.validateAiImportLimit();
 
         Business business = businessRepository
                 .findByOwner(SecurityUtil.getCurrentUser())
@@ -74,6 +83,8 @@ public class AiServiceImpl implements AiService {
         int categoryOrder = 1;
 
         int catalogOrder = 1;
+
+        int importedItems = 0;
 
         for (var aiCategory : request.getCategories()) {
 
@@ -142,10 +153,24 @@ public class AiServiceImpl implements AiService {
                 catalog.setDisplayOrder(catalogOrder++);
 
                 catalogRepository.save(catalog);
+                importedItems++;
 
             }
 
         }
+        Subscription subscription =
+                subscriptionRepository
+                        .findByBusiness(business)
+                        .orElseThrow(() ->
+                                new BusinessException("Subscription not found."));
+
+
+        if (importedItems > 0) {
+            subscription.setAiImportUsed(subscription.getAiImportUsed() + 1);
+            subscriptionRepository.save(subscription);
+        }
+
+        subscriptionRepository.save(subscription);
 
     }
 
