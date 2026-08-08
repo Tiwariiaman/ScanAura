@@ -1,0 +1,40 @@
+INSERT INTO plans (
+    id,
+    name,
+    monthly_price,
+    yearly_price,
+    trial_days,
+    ai_import_limit,
+    branded_qr,
+    priority_support,
+    active,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        gen_random_uuid(),
+        'Basic',
+        99,
+        999,
+        7,
+        3,
+        false,
+        false,
+        true,
+        now(),
+        now()
+    ),
+    (
+        gen_random_uuid(),
+        'Plus',
+        199,
+        1999,
+        7,
+        -1,
+        true,
+        true,
+        true,
+        now(),
+        now()
+    );
