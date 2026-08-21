@@ -11,4 +11,7 @@ public final class ImageFolder {
 
     public static final String PROFILE = "scanaura/profile";
 
+    public static final String PAYMENT_SCREENSHOT =
+            "scanaura/payment-screenshots";
+
 }

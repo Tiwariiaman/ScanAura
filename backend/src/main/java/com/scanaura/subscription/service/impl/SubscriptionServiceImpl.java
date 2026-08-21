@@ -19,6 +19,7 @@ import com.scanaura.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -37,14 +38,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public void createTrialSubscription(Business business) {
 
-        Plan basicPlan = planRepository.findByNameIgnoreCase("Basic")
-                .orElseThrow(() ->
-                        new BusinessException("Basic plan not found."));
+        Plan trialPlan = planRepository
+                .findByNameIgnoreCase("Trial")
+                .orElseGet(() -> {
+
+                    Plan plan = new Plan();
+
+                    plan.setName("Trial");
+                    plan.setMonthlyPrice(BigDecimal.ZERO);
+                    plan.setYearlyPrice(BigDecimal.ZERO);
+                    plan.setTrialDays(7);
+                    plan.setAiImportLimit(3);
+                    plan.setBrandedQr(false);
+                    plan.setPrioritySupport(false);
+                    plan.setActive(true);
+
+                    return planRepository.save(plan);
+                });
 
         Subscription subscription = new Subscription();
 
         subscription.setBusiness(business);
-        subscription.setPlan(basicPlan);
+        subscription.setPlan(trialPlan);
 
         subscription.setStatus(SubscriptionStatus.TRIAL);
         subscription.setBillingCycle(BillingCycle.MONTHLY);
@@ -53,7 +68,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscription.setEndDate(
                 LocalDate.now()
-                        .plusDays(basicPlan.getTrialDays())
+                        .plusDays(trialPlan.getTrialDays())
         );
 
         subscription.setAiImportUsed(0);

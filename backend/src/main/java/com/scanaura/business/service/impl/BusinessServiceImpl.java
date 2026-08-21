@@ -12,6 +12,7 @@ import com.scanaura.qr.service.QrService;
 import com.scanaura.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -24,12 +25,15 @@ public class BusinessServiceImpl implements BusinessService {
     private final SubscriptionService subscriptionService;
 
     @Override
+    @Transactional
     public BusinessResponse createBusiness(BusinessRequest request) {
 
         User currentUser = SecurityUtil.getCurrentUser();
 
         if (businessRepository.existsByOwner(currentUser)) {
-            throw new BusinessException("Business already exists.");
+            throw new BusinessException(
+                    "Business already exists."
+            );
         }
 
         Business business = new Business();
@@ -50,16 +54,20 @@ public class BusinessServiceImpl implements BusinessService {
         business.setUpiId(request.getUpiId());
 
         business.setQrSlug(UUID.randomUUID().toString());
-
         business.setActive(true);
 
-        Business savedBusiness = businessRepository.save(business);
+        Business savedBusiness =
+                businessRepository.save(business);
 
-// Create 7-day trial subscription
-        subscriptionService.createTrialSubscription(savedBusiness);
+        // Create 7-day Trial subscription.
+        subscriptionService.createTrialSubscription(
+                savedBusiness
+        );
 
-// Generate default digital QR
-        qrService.generateDigitalQr(savedBusiness.getId());
+        // Generate default digital QR.
+        qrService.generateDigitalQr(
+                savedBusiness.getId()
+        );
 
         return mapToResponse(savedBusiness);
     }
@@ -67,39 +75,76 @@ public class BusinessServiceImpl implements BusinessService {
     @Override
     public BusinessResponse getMyBusiness() {
 
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser =
+                SecurityUtil.getCurrentUser();
 
-        Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() ->
-                        new BusinessException("Business not found."));
+        Business business =
+                businessRepository.findByOwner(currentUser)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Business not found."
+                                ));
 
         return mapToResponse(business);
     }
 
     @Override
-    public BusinessResponse updateBusiness(BusinessRequest request) {
+    public BusinessResponse updateBusiness(
+            BusinessRequest request
+    ) {
 
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser =
+                SecurityUtil.getCurrentUser();
 
-        Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() ->
-                        new BusinessException("Business not found."));
+        Business business =
+                businessRepository.findByOwner(currentUser)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Business not found."
+                                ));
 
-        business.setBusinessName(request.getBusinessName());
-        business.setBusinessType(request.getBusinessType());
-        business.setPhone(request.getPhone());
-        business.setWhatsapp(request.getWhatsapp());
-        business.setEmail(request.getEmail());
-        business.setAddress(request.getAddress());
-        business.setCity(request.getCity());
-        business.setState(request.getState());
-        business.setCountry(request.getCountry());
-        business.setPincode(request.getPincode());
-        business.setWebsite(request.getWebsite());
-        business.setDescription(request.getDescription());
-        business.setUpiId(request.getUpiId());
+        business.setBusinessName(
+                request.getBusinessName()
+        );
+        business.setBusinessType(
+                request.getBusinessType()
+        );
+        business.setPhone(
+                request.getPhone()
+        );
+        business.setWhatsapp(
+                request.getWhatsapp()
+        );
+        business.setEmail(
+                request.getEmail()
+        );
+        business.setAddress(
+                request.getAddress()
+        );
+        business.setCity(
+                request.getCity()
+        );
+        business.setState(
+                request.getState()
+        );
+        business.setCountry(
+                request.getCountry()
+        );
+        business.setPincode(
+                request.getPincode()
+        );
+        business.setWebsite(
+                request.getWebsite()
+        );
+        business.setDescription(
+                request.getDescription()
+        );
+        business.setUpiId(
+                request.getUpiId()
+        );
 
-        Business updatedBusiness = businessRepository.save(business);
+        Business updatedBusiness =
+                businessRepository.save(business);
 
         return mapToResponse(updatedBusiness);
     }
@@ -107,35 +152,73 @@ public class BusinessServiceImpl implements BusinessService {
     @Override
     public void deleteBusiness() {
 
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser =
+                SecurityUtil.getCurrentUser();
 
-        Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() ->
-                        new BusinessException("Business not found."));
+        Business business =
+                businessRepository.findByOwner(currentUser)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Business not found."
+                                ));
 
         businessRepository.delete(business);
     }
 
-    private BusinessResponse mapToResponse(Business business) {
+    private BusinessResponse mapToResponse(
+            Business business
+    ) {
 
         return BusinessResponse.builder()
                 .id(business.getId())
-                .businessName(business.getBusinessName())
-                .businessType(business.getBusinessType())
-                .logoUrl(business.getLogoUrl())
-                .phone(business.getPhone())
-                .whatsapp(business.getWhatsapp())
-                .email(business.getEmail())
-                .address(business.getAddress())
-                .city(business.getCity())
-                .state(business.getState())
-                .country(business.getCountry())
-                .pincode(business.getPincode())
-                .website(business.getWebsite())
-                .description(business.getDescription())
-                .upiId(business.getUpiId())
-                .qrSlug(business.getQrSlug())
-                .active(business.getActive())
+                .businessName(
+                        business.getBusinessName()
+                )
+                .businessType(
+                        business.getBusinessType()
+                )
+                .logoUrl(
+                        business.getLogoUrl()
+                )
+                .phone(
+                        business.getPhone()
+                )
+                .whatsapp(
+                        business.getWhatsapp()
+                )
+                .email(
+                        business.getEmail()
+                )
+                .address(
+                        business.getAddress()
+                )
+                .city(
+                        business.getCity()
+                )
+                .state(
+                        business.getState()
+                )
+                .country(
+                        business.getCountry()
+                )
+                .pincode(
+                        business.getPincode()
+                )
+                .website(
+                        business.getWebsite()
+                )
+                .description(
+                        business.getDescription()
+                )
+                .upiId(
+                        business.getUpiId()
+                )
+                .qrSlug(
+                        business.getQrSlug()
+                )
+                .active(
+                        business.getActive()
+                )
                 .build();
     }
 }

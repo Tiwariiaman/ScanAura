@@ -102,6 +102,8 @@ public class CloudinaryImageService implements ImageService {
 
             case CATALOG -> ImageFolder.CATALOG;
 
+            case PAYMENT_SCREENSHOT ->
+                    ImageFolder.PAYMENT_SCREENSHOT;
         };
     }
 

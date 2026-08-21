@@ -4,6 +4,8 @@ public enum ImageType {
 
     BUSINESS,
 
-    CATALOG
+    CATALOG,
+    
+    PAYMENT_SCREENSHOT
 
 }

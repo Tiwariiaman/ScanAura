@@ -39,4 +39,21 @@ public class GlobalExceptionHandler {
                 new ApiResponse<>(false,error,null)
         );
     }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleBusinessException(
+            BusinessException ex
+    ) {
+
+        ApiResponse<Object> response =
+                new ApiResponse<>(false, ex.getMessage(), null);
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        if ("Business not found.".equalsIgnoreCase(ex.getMessage())) {
+            status = HttpStatus.NOT_FOUND;
+        }
+
+        return new ResponseEntity<>(response, status);
+    }
 }
