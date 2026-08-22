@@ -1,13 +1,13 @@
 package com.scanaura.auth.service;
 
-import com.scanaura.auth.dto.LoginRequest;
-import com.scanaura.auth.dto.LoginResponse;
-import com.scanaura.auth.dto.RegisterRequest;
-import com.scanaura.auth.dto.RegisterResponse;
+import com.scanaura.auth.dto.*;
 
 public interface AuthService {
 
     RegisterResponse register(RegisterRequest request);
 
     LoginResponse login(LoginRequest request);
+    AdminRegisterResponse registerAdmin(
+            AdminRegisterRequest request
+    );
 }

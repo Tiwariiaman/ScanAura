@@ -1,9 +1,6 @@
 package com.scanaura.auth.controller;
 
-import com.scanaura.auth.dto.LoginRequest;
-import com.scanaura.auth.dto.LoginResponse;
-import com.scanaura.auth.dto.RegisterRequest;
-import com.scanaura.auth.dto.RegisterResponse;
+import com.scanaura.auth.dto.*;
 import com.scanaura.auth.service.AuthService;
 import com.scanaura.common.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -55,6 +52,26 @@ public class AuthController {
                         response
                 )
         );
+    }
+
+    //Admin Register
+    @PostMapping("/register-admin")
+    public ResponseEntity<ApiResponse<AdminRegisterResponse>> registerAdmin(
+            @Valid @RequestBody AdminRegisterRequest request
+    ) {
+
+        AdminRegisterResponse response =
+                authService.registerAdmin(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        new ApiResponse<>(
+                                true,
+                                "Admin registered successfully.",
+                                response
+                        )
+                );
     }
 
 }

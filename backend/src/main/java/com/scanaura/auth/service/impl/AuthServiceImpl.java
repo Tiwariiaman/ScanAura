@@ -1,9 +1,6 @@
 package com.scanaura.auth.service.impl;
 
-import com.scanaura.auth.dto.LoginRequest;
-import com.scanaura.auth.dto.LoginResponse;
-import com.scanaura.auth.dto.RegisterRequest;
-import com.scanaura.auth.dto.RegisterResponse;
+import com.scanaura.auth.dto.*;
 import com.scanaura.auth.entity.User;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.auth.repository.UserRepository;
@@ -77,18 +74,89 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() ->
-                        new BusinessException("Invalid email or password"));
+                        new BusinessException(
+                                "Invalid email or password"
+                        ));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BusinessException("Invalid email or password");
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        )) {
+            throw new BusinessException(
+                    "Invalid email or password"
+            );
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole().name()
+        );
 
         return new LoginResponse(
                 token,
                 "Bearer",
                 86400000L
+        );
+    }
+
+    //Admin Register
+    @Override
+    public AdminRegisterResponse registerAdmin(
+            AdminRegisterRequest request
+    ) {
+
+        if (userRepository.existsByEmail(
+                request.getEmail()
+        )) {
+            throw new BusinessException(
+                    AppConstants.EMAIL_ALREADY_EXISTS
+            );
+        }
+
+        if (userRepository.existsByMobile(
+                request.getMobile()
+        )) {
+            throw new BusinessException(
+                    AppConstants.MOBILE_ALREADY_EXISTS
+            );
+        }
+
+        User user = new User();
+
+        user.setFullName(
+                request.getFullName()
+        );
+
+        user.setEmail(
+                request.getEmail()
+        );
+
+        user.setMobile(
+                request.getMobile()
+        );
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getPassword()
+                )
+        );
+
+        user.setRole(
+                UserRole.ADMIN
+        );
+
+        user.setVerified(true);
+        user.setActive(true);
+
+        User savedUser =
+                userRepository.save(user);
+
+        return new AdminRegisterResponse(
+                savedUser.getId(),
+                savedUser.getFullName(),
+                savedUser.getEmail(),
+                savedUser.getMobile(),
+                savedUser.getRole().name()
         );
     }
 

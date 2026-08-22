@@ -44,7 +44,7 @@ public class GeminiAiClientImpl implements AiClient {
 
             String response = geminiRestClient
                     .post()
-                    .uri("?key={key}", apiKey)
+                    .header("x-goog-api-key", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(request)
                     .retrieve()
