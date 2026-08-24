@@ -1,5 +1,6 @@
 package com.scanaura.qr.service;
 
+import com.scanaura.publicapi.dto.PublicQrResponse;
 import com.scanaura.qr.dto.AssignQrRequest;
 import com.scanaura.qr.dto.DigitalQrResponse;
 import com.scanaura.qr.dto.QrResponse;
@@ -31,6 +32,8 @@ public interface QrService {
     List<QrResponse> generatePhysicalQrCodes(int count);
 
     QrResponse getMyDigitalQr();
+
+    PublicQrResponse resolvePublicQr(String qrCode);
 
 
 }

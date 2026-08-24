@@ -19,6 +19,8 @@ public class BusinessRequest {
     @NotBlank(message = "Phone number is required")
     private String phone;
 
+    private String logoUrl;
+
     private String whatsapp;
 
     private String email;

@@ -46,6 +46,7 @@ public class SecurityConfig {
                 "GET",
                 "POST",
                 "PUT",
+                "PATCH",
                 "DELETE",
                 "OPTIONS"
         ));
@@ -82,16 +83,25 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public APIs
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/public/**"
                         ).permitAll()
 
+                        // CORS preflight
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
+                        // Admin APIs
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        ).hasAuthority("ADMIN")
+
+                        // Everything else requires login
                         .anyRequest().authenticated()
                 )
 

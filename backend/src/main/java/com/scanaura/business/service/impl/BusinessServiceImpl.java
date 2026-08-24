@@ -42,6 +42,7 @@ public class BusinessServiceImpl implements BusinessService {
         business.setBusinessName(request.getBusinessName());
         business.setBusinessType(request.getBusinessType());
         business.setPhone(request.getPhone());
+        business.setLogoUrl(request.getLogoUrl());
         business.setWhatsapp(request.getWhatsapp());
         business.setEmail(request.getEmail());
         business.setAddress(request.getAddress());
@@ -112,6 +113,8 @@ public class BusinessServiceImpl implements BusinessService {
         business.setPhone(
                 request.getPhone()
         );
+        business.setLogoUrl(request.getLogoUrl());
+
         business.setWhatsapp(
                 request.getWhatsapp()
         );

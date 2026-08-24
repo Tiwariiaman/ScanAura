@@ -1,5 +1,6 @@
 package com.scanaura.admin.service.impl;
 
+import com.scanaura.admin.dto.AdminQrDetailsResponse;
 import com.scanaura.admin.dto.BusinessSummaryResponse;
 import com.scanaura.admin.dto.DashboardResponse;
 import com.scanaura.admin.dto.QrInventoryResponse;
@@ -10,7 +11,9 @@ import com.scanaura.common.enums.QrType;
 import com.scanaura.common.enums.RequestStatus;
 import com.scanaura.common.enums.SubscriptionStatus;
 import com.scanaura.common.exception.BusinessException;
+import com.scanaura.qr.dto.QrResponse;
 import com.scanaura.qr.dto.QrStockResponse;
+import com.scanaura.qr.entity.QrCode;
 import com.scanaura.qr.repository.QrCodeRepository;
 import com.scanaura.qr.service.QrService;
 import com.scanaura.subscription.entity.Subscription;
@@ -227,10 +230,13 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public void generatePhysicalQr(int count) {
+    public List<QrResponse> generatePhysicalQr(
+            int count
+    ) {
 
-        qrService.generatePhysicalQrCodes(count);
-
+        return qrService.generatePhysicalQrCodes(
+                count
+        );
     }
 
     @Override
@@ -239,4 +245,37 @@ public class AdminServiceImpl implements AdminService {
         qrService.deactivateQr(qrCode);
 
     }
+
+    @Override
+    public AdminQrDetailsResponse getQrDetails(
+            String qrCode
+    ) {
+
+        QrCode qrCodeEntity =
+                qrCodeRepository.findByQrCode(qrCode)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "QR code not found."
+                                ));
+
+        return AdminQrDetailsResponse.builder()
+                .id(qrCodeEntity.getId())
+                .qrCode(qrCodeEntity.getQrCode())
+                .type(qrCodeEntity.getType())
+                .active(qrCodeEntity.getActive())
+                .assigned(qrCodeEntity.getAssigned())
+                .businessId(
+                        qrCodeEntity.getBusiness() != null
+                                ? qrCodeEntity.getBusiness().getId()
+                                : null
+                )
+                .businessName(
+                        qrCodeEntity.getBusiness() != null
+                                ? qrCodeEntity.getBusiness()
+                                .getBusinessName()
+                                : null
+                )
+                .build();
+    }
+
 }

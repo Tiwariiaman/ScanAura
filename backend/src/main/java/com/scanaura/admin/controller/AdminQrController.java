@@ -1,11 +1,16 @@
 package com.scanaura.admin.controller;
 
+import com.scanaura.admin.dto.AdminQrDetailsResponse;
 import com.scanaura.admin.dto.QrInventoryResponse;
 import com.scanaura.admin.service.AdminService;
 import com.scanaura.common.response.ApiResponse;
+import com.scanaura.qr.dto.QrResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/qr")
@@ -34,26 +39,18 @@ public class AdminQrController {
     }
 
     @PostMapping("/generate/{count}")
-    public ResponseEntity<ApiResponse<String>> generateQr(
+    public ResponseEntity<ApiResponse<List<QrResponse>>> generateQr(
             @PathVariable int count
     ) {
 
-        adminService.generatePhysicalQr(count);
-
-        return ResponseEntity.ok(
-
-                new ApiResponse<>(
-
-                        true,
-
-                        "QR generated successfully.",
-
-                        "SUCCESS"
-
-                )
-
-        );
-
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        new ApiResponse<>(
+                                true,
+                                "QR codes generated successfully.",
+                                adminService.generatePhysicalQr(count)
+                        )
+                );
     }
 
     @PatchMapping("/deactivate/{qrCode}")
@@ -78,5 +75,21 @@ public class AdminQrController {
         );
 
     }
+
+    @GetMapping("/{qrCode}")
+    public ResponseEntity<ApiResponse<AdminQrDetailsResponse>> getQrDetails(
+            @PathVariable String qrCode
+    ) {
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "QR details fetched successfully.",
+                        adminService.getQrDetails(qrCode)
+                )
+        );
+    }
+
+
 
 }

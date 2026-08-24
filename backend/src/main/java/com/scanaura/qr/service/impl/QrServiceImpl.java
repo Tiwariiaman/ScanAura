@@ -6,6 +6,7 @@ import com.scanaura.common.enums.QrType;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.QrCodeGenerator;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.publicapi.dto.PublicQrResponse;
 import com.scanaura.qr.dto.AssignQrRequest;
 import com.scanaura.qr.dto.DigitalQrResponse;
 import com.scanaura.qr.dto.QrResponse;
@@ -239,6 +240,52 @@ public class QrServiceImpl implements QrService {
                         new BusinessException("Digital QR not found."));
 
         return mapToResponse(qrCode);
+    }
+
+    @Override
+    public PublicQrResponse resolvePublicQr(String qrCode) {
+
+        QrCode qr = qrCodeRepository
+                .findByQrCode(qrCode)
+                .orElseThrow(() ->
+                        new BusinessException(
+                                "QR code not found."
+                        ));
+
+        if (!Boolean.TRUE.equals(qr.getActive())) {
+            throw new BusinessException(
+                    "This QR code is no longer active."
+            );
+        }
+
+        if (!Boolean.TRUE.equals(qr.getAssigned())
+                || qr.getBusiness() == null) {
+
+            throw new BusinessException(
+                    "This QR code is not assigned to a business yet."
+            );
+        }
+
+        Business business = qr.getBusiness();
+
+        if (!Boolean.TRUE.equals(business.getActive())) {
+            throw new BusinessException(
+                    "This business is currently unavailable."
+            );
+        }
+
+        return PublicQrResponse.builder()
+                .qrCode(qr.getQrCode())
+                .businessId(business.getId())
+                .businessName(
+                        business.getBusinessName()
+                )
+                .qrType(
+                        qr.getType().name()
+                )
+                .active(qr.getActive())
+                .assigned(qr.getAssigned())
+                .build();
     }
 
 }
