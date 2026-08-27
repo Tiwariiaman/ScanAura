@@ -3,44 +3,65 @@ spring:
     name: ScanAura
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/scanaura
-    username: postgres
-    password: ${DB_PASSWORD}
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
-    show-sql: true
+    show-sql: false
 
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   flyway:
     enabled: false
-    baseline-on-migrate: true
-
 
   servlet:
     multipart:
       max-file-size: 2MB
       max-request-size: 2MB
 
-server:
-  port: 8080
+  mail:
+    host: ${MAIL_HOST:smtp.hostinger.com}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+
+server:
+  port: ${SERVER_PORT:8080}
 
 jwt:
-    secret: ${JWT_SECRET}
-    expiration: 86400000
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 cloudinary:
-  cloud-name: jkkm2fpw
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
-  api-secret: kZCpwn8LVoPA76hcKN9UExMyt98
+  api-secret: ${CLOUDINARY_API_SECRET}
 
 gemini:
   api:
-    key: ${CLOUDINARY_API_SECRET}
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent
+    key: ${GEMINI_API_KEY}
+    url: ${GEMINI_API_URL}
+
+scanaura:
+  frontend-url: ${SCANAURA_FRONTEND_URL:https://scanaura.in}
+
+  logo-url: ${SCANAURA_LOGO_URL}
+
+  features:
+    test-mode: ${SCANAURA_TEST_MODE:false}
