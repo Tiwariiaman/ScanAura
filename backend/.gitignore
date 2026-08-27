@@ -49,3 +49,6 @@ Thumbs.db
 ### Secrets ###
 application-local.yml
 application-dev.yml
+.env
+.env.*
+!.env.example
