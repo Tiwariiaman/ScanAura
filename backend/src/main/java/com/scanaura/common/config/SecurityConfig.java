@@ -3,6 +3,7 @@ package com.scanaura.common.config;
 import com.scanaura.common.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -39,7 +40,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:*",
-                "http://127.0.0.1:*"
+                "http://127.0.0.1:*",
+                "https://scanaura.in",
+                "https://www.scanaura.in"
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -92,7 +95,7 @@ public class SecurityConfig {
 
                         // CORS preflight
                         .requestMatchers(
-                                org.springframework.http.HttpMethod.OPTIONS,
+                                HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
