@@ -19,6 +19,7 @@ spring:
 
   flyway:
     enabled: false
+    locations: classpath:/production-migration
 
   servlet:
     multipart:

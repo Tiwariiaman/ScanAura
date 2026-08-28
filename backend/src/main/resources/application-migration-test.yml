@@ -1,0 +1,22 @@
+spring:
+  config:
+    activate:
+      on-profile: migration-test
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/scanaura_production_test
+    username: ${LOCAL_DATABASE_USERNAME}
+    password: ${LOCAL_DATABASE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:/production-migration
+
+server:
+  port: 8081
