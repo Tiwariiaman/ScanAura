@@ -124,7 +124,7 @@ public class AuthServiceImpl implements AuthService {
 // Build verification URL.
         final String verificationUrl =
                 frontendUrl
-                        + "/verify-email?token="
+                        + "/#/verify-email?token="
                         + verificationToken;
 
 // Send verification email.
@@ -149,10 +149,14 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository
-                .findByEmail(request.getEmail())
+                .findByEmail(
+                        request.getEmail()
+                                .trim()
+                                .toLowerCase()
+                )
                 .orElseThrow(() ->
                         new BusinessException(
-                                "Invalid email or password"
+                                "Account not found. Please register."
                         )
                 );
 
@@ -162,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getPassword()
         )) {
             throw new BusinessException(
-                    "Invalid email or password"
+                    "Incorrect email or password."
             );
         }
 
@@ -438,7 +442,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final String verificationUrl =
-                "http://localhost:8080/api/v1/auth/verify-email?token="
+                frontendUrl
+                        + "/#/verify-email?token="
                         + newVerificationToken;
 
         emailService.sendVerificationEmail(
@@ -501,7 +506,7 @@ public class AuthServiceImpl implements AuthService {
 
         final String resetUrl =
                 frontendUrl
-                        + "/reset-password?token="
+                        + "/#/reset-password?token="
                         + resetToken;
 
         emailService.sendPasswordResetEmail(
