@@ -41,16 +41,29 @@ jobs:
 
           echo "Restarting ScanAura backend..."
           sudo systemctl restart scanaura
-
-          echo "Checking systemd service..."
+          echo "Checking ScanAura service..."
           sudo systemctl is-active --quiet scanaura
+          
+          echo "Checking port 8080..."
+          if ! sudo ss -ltnp | grep -q ':8080'; then
+          echo "ERROR: Nothing is listening on port 8080."
+          exit 1
+          fi
 
           echo "Waiting for Spring Boot..."
-          sleep 5
-
-          echo "Checking local API..."
-          curl --fail --silent --show-error \
-            http://localhost:8080 > /dev/null
+          for i in {1..30}; do
+          if curl --fail --silent --show-error \
+          http://localhost:8080 > /dev/null; then
+          echo "Spring Boot is responding."
+          break
+          fi
+          if [ "$i" -eq 30 ]; then
+          echo "ERROR: Spring Boot did not become ready within 60 seconds."
+          exit 1
+          fi
+          echo "Waiting for Spring Boot... attempt $i/30"
+          sleep 2
+          done
 
           echo "======================================"
           echo "ScanAura backend deployment successful"
