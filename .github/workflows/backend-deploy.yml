@@ -34,36 +34,56 @@ jobs:
           chmod +x mvnw
 
           echo "Building Spring Boot application..."
-          MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=256m" ./mvnw clean package -DskipTests
+          MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=256m" \
+            ./mvnw clean package -DskipTests
 
           echo "Checking generated JAR..."
           test -f target/scanaura-0.0.1-SNAPSHOT.jar
 
           echo "Restarting ScanAura backend..."
           sudo systemctl restart scanaura
+
           echo "Checking ScanAura service..."
           sudo systemctl is-active --quiet scanaura
-          
-          echo "Checking port 8080..."
-          if ! sudo ss -ltnp | grep -q ':8080'; then
-          echo "ERROR: Nothing is listening on port 8080."
-          exit 1
-          fi
 
           echo "Waiting for Spring Boot..."
+
+          APP_READY=false
+
           for i in {1..30}; do
-          if curl --fail --silent --show-error \
-          http://localhost:8080 > /dev/null; then
-          echo "Spring Boot is responding."
-          break
-          fi
-          if [ "$i" -eq 30 ]; then
-          echo "ERROR: Spring Boot did not become ready within 60 seconds."
-          exit 1
-          fi
-          echo "Waiting for Spring Boot... attempt $i/30"
-          sleep 2
+            HTTP_CODE=$(curl \
+              --silent \
+              --show-error \
+              --output /dev/null \
+              --write-out "%{http_code}" \
+              http://localhost:8080 || true)
+
+            if [ "$HTTP_CODE" != "000" ] && [ -n "$HTTP_CODE" ]; then
+              echo "Spring Boot is responding with HTTP $HTTP_CODE."
+              APP_READY=true
+              break
+            fi
+
+            echo "Waiting for Spring Boot... attempt $i/30"
+            sleep 2
           done
+
+          if [ "$APP_READY" != "true" ]; then
+            echo "ERROR: Spring Boot did not become ready within 60 seconds."
+            echo ""
+            echo "Recent ScanAura logs:"
+            sudo journalctl -u scanaura -n 50 --no-pager
+            exit 1
+          fi
+
+          echo "Checking port 8080..."
+
+          if sudo ss -ltnp | grep -q ':8080'; then
+            echo "Port 8080 is listening."
+          else
+            echo "ERROR: Spring Boot responded but port 8080 is not listening."
+            exit 1
+          fi
 
           echo "======================================"
           echo "ScanAura backend deployment successful"
