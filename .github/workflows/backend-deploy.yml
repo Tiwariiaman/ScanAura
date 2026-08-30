@@ -12,62 +12,46 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      # ------------------------------------------------------------
-      # Checkout repository
-      # ------------------------------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Deploy backend
+        shell: bash
+        run: |
+          set -e
 
-      # ------------------------------------------------------------
-      # Deploy latest backend to EC2
-      # ------------------------------------------------------------
-      - name: Deploy backend to EC2
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          command_timeout: 10m
+          echo "======================================"
+          echo "Starting ScanAura backend deployment"
+          echo "======================================"
 
-          script: |
-            set -e
+          cd /opt/scanaura/backend/backend
 
-            echo "======================================"
-            echo "Starting ScanAura backend deployment"
-            echo "======================================"
+          echo "Pulling latest code..."
+          git fetch origin master
+          git reset --hard origin/master
 
-            cd /opt/scanaura/backend/backend
+          echo "Making Maven wrapper executable..."
+          chmod +x mvnw
 
-            echo "Pulling latest code..."
-            git fetch origin master
-            git reset --hard origin/master
+          echo "Building Spring Boot application..."
+          ./mvnw clean package -DskipTests
 
-            echo "Making Maven wrapper executable..."
-            chmod +x mvnw
+          echo "Checking generated JAR..."
+          test -f target/scanaura-0.0.1-SNAPSHOT.jar
 
-            echo "Building Spring Boot application..."
-            ./mvnw clean package -DskipTests
+          echo "Restarting ScanAura backend..."
+          sudo systemctl restart scanaura
 
-            echo "Checking generated JAR..."
-            test -f target/scanaura-0.0.1-SNAPSHOT.jar
+          echo "Checking systemd service..."
+          sudo systemctl is-active --quiet scanaura
 
-            echo "Restarting ScanAura backend..."
-            sudo systemctl restart scanaura
+          echo "Waiting for Spring Boot..."
+          sleep 5
 
-            echo "Checking systemd service..."
-            sudo systemctl is-active --quiet scanaura
+          echo "Checking local API..."
+          curl --fail --silent --show-error \
+            http://localhost:8080 > /dev/null
 
-            echo "Waiting for Spring Boot..."
-            sleep 5
-
-            echo "Checking local API..."
-            curl --fail --silent --show-error \
-              http://localhost:8080 > /dev/null
-
-            echo "======================================"
-            echo "ScanAura backend deployment successful"
-            echo "======================================"
+          echo "======================================"
+          echo "ScanAura backend deployment successful"
+          echo "======================================"
