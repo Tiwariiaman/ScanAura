@@ -34,7 +34,7 @@ jobs:
           chmod +x mvnw
 
           echo "Building Spring Boot application..."
-          ./mvnw clean package -DskipTests
+          MAVEN_OPTS="-Xmx512m -XX:MaxMetaspaceSize=256m" ./mvnw clean package -DskipTests
 
           echo "Checking generated JAR..."
           test -f target/scanaura-0.0.1-SNAPSHOT.jar
