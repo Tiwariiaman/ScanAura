@@ -22,4 +22,7 @@ public class LandingResponse {
 
     private Boolean paymentEnabled;
 
+    private String googleReviewUrl;
+
+    private Boolean googleReviewEnabled;
 }

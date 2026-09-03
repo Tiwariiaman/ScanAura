@@ -13,7 +13,8 @@ import com.scanaura.qr.repository.QrCodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,27 +29,87 @@ public class PublicServiceImpl implements PublicService {
 
         Business business = getBusiness(qrCode);
 
+        boolean paymentAvailable =
+                hasValue(business.getUpiId()) &&
+                        Boolean.TRUE.equals(
+                                business.getPaymentEnabled()
+                        );
+
+        boolean googleReviewAvailable =
+                hasValue(business.getGoogleReviewUrl()) &&
+                        Boolean.TRUE.equals(
+                                business.getGoogleReviewEnabled()
+                        );
+
         return LandingResponse.builder()
-                .businessName(business.getBusinessName())
-                .businessType(business.getBusinessType())
-                .city(business.getCity())
-                .logoUrl(business.getLogoUrl())
+                .businessName(
+                        business.getBusinessName()
+                )
+                .businessType(
+                        business.getBusinessType()
+                )
+                .city(
+                        business.getCity()
+                )
+                .logoUrl(
+                        business.getLogoUrl()
+                )
                 .menuAvailable(true)
+
+                /*
+                 * Public payment visibility requires
+                 * BOTH a valid UPI ID and the owner's
+                 * payment toggle to be enabled.
+                 */
                 .paymentEnabled(
-                        business.getUpiId() != null &&
-                                !business.getUpiId().isBlank()
+                        paymentAvailable
+                )
+
+                /*
+                 * Only expose the review URL when the
+                 * feature is actually available publicly.
+                 */
+                .googleReviewUrl(
+                        googleReviewAvailable
+                                ? business.getGoogleReviewUrl()
+                                : null
+                )
+                .googleReviewEnabled(
+                        googleReviewAvailable
                 )
                 .build();
     }
 
     @Override
-    public PaymentResponse getPaymentDetails(String qrCode) {
+    public PaymentResponse getPaymentDetails(
+            String qrCode
+    ) {
 
         Business business = getBusiness(qrCode);
 
+        boolean paymentAvailable =
+                hasValue(business.getUpiId()) &&
+                        Boolean.TRUE.equals(
+                                business.getPaymentEnabled()
+                        );
+
+        /*
+         * Prevent direct access to payment details
+         * when the owner has disabled payments.
+         */
+        if (!paymentAvailable) {
+            throw new BusinessException(
+                    "UPI payment is not available."
+            );
+        }
+
         return PaymentResponse.builder()
-                .businessName(business.getBusinessName())
-                .upiId(business.getUpiId())
+                .businessName(
+                        business.getBusinessName()
+                )
+                .upiId(
+                        business.getUpiId()
+                )
                 .build();
     }
 
@@ -58,58 +119,104 @@ public class PublicServiceImpl implements PublicService {
         Business business = getBusiness(qrCode);
 
         List<Category> categories =
-                categoryRepository.findByBusinessOrderByDisplayOrderAsc(business);
+                categoryRepository
+                        .findByBusinessOrderByDisplayOrderAsc(
+                                business
+                        );
 
-        List<MenuCategoryResponse> menu = new ArrayList<>();
+        List<MenuCategoryResponse> menu =
+                new ArrayList<>();
 
         for (Category category : categories) {
 
             List<Catalog> catalogs =
-                    catalogRepository.findByBusinessAndCategoryOrderByDisplayOrderAsc(
-                            business,
-                            category
-                    );
+                    catalogRepository
+                            .findByBusinessAndCategoryOrderByDisplayOrderAsc(
+                                    business,
+                                    category
+                            );
 
-            List<MenuItemResponse> items = catalogs.stream()
-                    .map(catalog -> MenuItemResponse.builder()
-                            .name(catalog.getName())
-                            .description(catalog.getDescription())
-                            .price(catalog.getPrice())
-                            .imageUrl(catalog.getImageUrl())
-                            .veg(catalog.getVeg())
-                            .available(catalog.getAvailable())
-                            .bestSeller(catalog.getBestSeller())
-                            .recommended(catalog.getRecommended())
-                            .build())
-                    .toList();
+            List<MenuItemResponse> items =
+                    catalogs.stream()
+                            .map(catalog ->
+                                    MenuItemResponse.builder()
+                                            .name(
+                                                    catalog.getName()
+                                            )
+                                            .description(
+                                                    catalog.getDescription()
+                                            )
+                                            .price(
+                                                    catalog.getPrice()
+                                            )
+                                            .imageUrl(
+                                                    catalog.getImageUrl()
+                                            )
+                                            .veg(
+                                                    catalog.getVeg()
+                                            )
+                                            .available(
+                                                    catalog.getAvailable()
+                                            )
+                                            .bestSeller(
+                                                    catalog.getBestSeller()
+                                            )
+                                            .recommended(
+                                                    catalog.getRecommended()
+                                            )
+                                            .build()
+                            )
+                            .toList();
 
             menu.add(
                     MenuCategoryResponse.builder()
-                            .categoryName(category.getName())
+                            .categoryName(
+                                    category.getName()
+                            )
                             .items(items)
                             .build()
             );
         }
 
         List<Catalog> uncategorizedItems =
-                catalogRepository.findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(
-                        business
-                );
+                catalogRepository
+                        .findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(
+                                business
+                        );
 
         if (!uncategorizedItems.isEmpty()) {
 
-            List<MenuItemResponse> items = uncategorizedItems.stream()
-                    .map(catalog -> MenuItemResponse.builder()
-                            .name(catalog.getName())
-                            .description(catalog.getDescription())
-                            .price(catalog.getPrice())
-                            .imageUrl(catalog.getImageUrl())
-                            .veg(catalog.getVeg())
-                            .available(catalog.getAvailable())
-                            .bestSeller(catalog.getBestSeller())
-                            .recommended(catalog.getRecommended())
-                            .build())
-                    .toList();
+            List<MenuItemResponse> items =
+                    uncategorizedItems.stream()
+                            .map(catalog ->
+                                    MenuItemResponse.builder()
+                                            .name(
+                                                    catalog.getName()
+                                            )
+                                            .description(
+                                                    catalog.getDescription()
+                                            )
+                                            .price(
+                                                    catalog.getPrice()
+                                            )
+                                            .imageUrl(
+                                                    catalog.getImageUrl()
+                                            )
+                                            .veg(
+                                                    catalog.getVeg()
+                                            )
+                                            .available(
+                                                    catalog.getAvailable()
+                                            )
+                                            .bestSeller(
+                                                    catalog.getBestSeller()
+                                            )
+                                            .recommended(
+                                                    catalog.getRecommended()
+                                            )
+                                            .build()
+                            )
+                            .toList();
 
             menu.add(
                     MenuCategoryResponse.builder()
@@ -120,26 +227,40 @@ public class PublicServiceImpl implements PublicService {
         }
 
         return MenuResponse.builder()
-                .businessName(business.getBusinessName())
-                .logoUrl(business.getLogoUrl())
+                .businessName(
+                        business.getBusinessName()
+                )
+                .logoUrl(
+                        business.getLogoUrl()
+                )
                 .menu(menu)
                 .build();
     }
 
-
+    private boolean hasValue(String value) {
+        return value != null &&
+                !value.isBlank();
+    }
 
     private Business getBusiness(String qrCode) {
 
-        QrCode qr = qrCodeRepository.findByQrCode(qrCode)
-                .orElseThrow(() ->
-                        new BusinessException("QR Code not found."));
+        QrCode qr =
+                qrCodeRepository.findByQrCode(qrCode)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "QR Code not found."
+                                ));
 
         if (!qr.getActive()) {
-            throw new BusinessException("QR Code is inactive.");
+            throw new BusinessException(
+                    "QR Code is inactive."
+            );
         }
 
         if (qr.getBusiness() == null) {
-            throw new BusinessException("QR Code is not assigned.");
+            throw new BusinessException(
+                    "QR Code is not assigned."
+            );
         }
 
         return qr.getBusiness();

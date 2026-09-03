@@ -41,4 +41,9 @@ public class BusinessRequest {
 
     private String upiId;
 
+    private String googleReviewUrl;
+
+    private Boolean googleReviewEnabled;
+
+    private Boolean paymentEnabled;
 }

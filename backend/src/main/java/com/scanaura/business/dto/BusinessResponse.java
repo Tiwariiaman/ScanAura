@@ -44,8 +44,13 @@ public class BusinessResponse {
 
     private String upiId;
 
+    private String googleReviewUrl;
+
+    private Boolean googleReviewEnabled;
+
+    private Boolean paymentEnabled;
+
     private String qrSlug;
 
     private Boolean active;
-
 }

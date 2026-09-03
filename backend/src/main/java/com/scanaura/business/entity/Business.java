@@ -7,8 +7,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "businesses")
 @Getter
@@ -52,10 +50,18 @@ public class Business extends BaseEntity {
 
     private String upiId;
 
+    @Column(length = 500)
+    private String googleReviewUrl;
+
+    @Column(nullable = false)
+    private Boolean googleReviewEnabled = false;
+
+    @Column(nullable = false)
+    private Boolean paymentEnabled = true;
+
     @Column(nullable = false, unique = true)
     private String qrSlug;
 
     @Column(nullable = false)
     private Boolean active = true;
-
 }

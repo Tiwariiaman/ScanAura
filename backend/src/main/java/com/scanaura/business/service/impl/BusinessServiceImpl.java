@@ -26,7 +26,9 @@ public class BusinessServiceImpl implements BusinessService {
 
     @Override
     @Transactional
-    public BusinessResponse createBusiness(BusinessRequest request) {
+    public BusinessResponse createBusiness(
+            BusinessRequest request
+    ) {
 
         User currentUser = SecurityUtil.getCurrentUser();
 
@@ -39,22 +41,69 @@ public class BusinessServiceImpl implements BusinessService {
         Business business = new Business();
 
         business.setOwner(currentUser);
-        business.setBusinessName(request.getBusinessName());
-        business.setBusinessType(request.getBusinessType());
-        business.setPhone(request.getPhone());
-        business.setLogoUrl(request.getLogoUrl());
-        business.setWhatsapp(request.getWhatsapp());
-        business.setEmail(request.getEmail());
-        business.setAddress(request.getAddress());
-        business.setCity(request.getCity());
-        business.setState(request.getState());
-        business.setCountry(request.getCountry());
-        business.setPincode(request.getPincode());
-        business.setWebsite(request.getWebsite());
-        business.setDescription(request.getDescription());
-        business.setUpiId(request.getUpiId());
+        business.setBusinessName(
+                request.getBusinessName()
+        );
+        business.setBusinessType(
+                request.getBusinessType()
+        );
+        business.setPhone(
+                request.getPhone()
+        );
+        business.setLogoUrl(
+                request.getLogoUrl()
+        );
+        business.setWhatsapp(
+                request.getWhatsapp()
+        );
+        business.setEmail(
+                request.getEmail()
+        );
+        business.setAddress(
+                request.getAddress()
+        );
+        business.setCity(
+                request.getCity()
+        );
+        business.setState(
+                request.getState()
+        );
+        business.setCountry(
+                request.getCountry()
+        );
+        business.setPincode(
+                request.getPincode()
+        );
+        business.setWebsite(
+                request.getWebsite()
+        );
+        business.setDescription(
+                request.getDescription()
+        );
+        business.setUpiId(
+                request.getUpiId()
+        );
 
-        business.setQrSlug(UUID.randomUUID().toString());
+        business.setGoogleReviewUrl(
+                request.getGoogleReviewUrl()
+        );
+
+        business.setGoogleReviewEnabled(
+                Boolean.TRUE.equals(
+                        request.getGoogleReviewEnabled()
+                )
+        );
+
+        business.setPaymentEnabled(
+                request.getPaymentEnabled() == null
+                        ? true
+                        : request.getPaymentEnabled()
+        );
+
+        business.setQrSlug(
+                UUID.randomUUID().toString()
+        );
+
         business.setActive(true);
 
         Business savedBusiness =
@@ -107,44 +156,81 @@ public class BusinessServiceImpl implements BusinessService {
         business.setBusinessName(
                 request.getBusinessName()
         );
+
         business.setBusinessType(
                 request.getBusinessType()
         );
+
         business.setPhone(
                 request.getPhone()
         );
-        business.setLogoUrl(request.getLogoUrl());
+
+        business.setLogoUrl(
+                request.getLogoUrl()
+        );
 
         business.setWhatsapp(
                 request.getWhatsapp()
         );
+
         business.setEmail(
                 request.getEmail()
         );
+
         business.setAddress(
                 request.getAddress()
         );
+
         business.setCity(
                 request.getCity()
         );
+
         business.setState(
                 request.getState()
         );
+
         business.setCountry(
                 request.getCountry()
         );
+
         business.setPincode(
                 request.getPincode()
         );
+
         business.setWebsite(
                 request.getWebsite()
         );
+
         business.setDescription(
                 request.getDescription()
         );
+
         business.setUpiId(
                 request.getUpiId()
         );
+
+        business.setGoogleReviewUrl(
+                request.getGoogleReviewUrl()
+        );
+
+        /*
+         * Only update feature toggles when the request
+         * actually provides them.
+         *
+         * This prevents older frontend requests from
+         * accidentally resetting existing settings.
+         */
+        if (request.getGoogleReviewEnabled() != null) {
+            business.setGoogleReviewEnabled(
+                    request.getGoogleReviewEnabled()
+            );
+        }
+
+        if (request.getPaymentEnabled() != null) {
+            business.setPaymentEnabled(
+                    request.getPaymentEnabled()
+            );
+        }
 
         Business updatedBusiness =
                 businessRepository.save(business);
@@ -173,7 +259,9 @@ public class BusinessServiceImpl implements BusinessService {
     ) {
 
         return BusinessResponse.builder()
-                .id(business.getId())
+                .id(
+                        business.getId()
+                )
                 .businessName(
                         business.getBusinessName()
                 )
@@ -215,6 +303,15 @@ public class BusinessServiceImpl implements BusinessService {
                 )
                 .upiId(
                         business.getUpiId()
+                )
+                .googleReviewUrl(
+                        business.getGoogleReviewUrl()
+                )
+                .googleReviewEnabled(
+                        business.getGoogleReviewEnabled()
+                )
+                .paymentEnabled(
+                        business.getPaymentEnabled()
                 )
                 .qrSlug(
                         business.getQrSlug()
