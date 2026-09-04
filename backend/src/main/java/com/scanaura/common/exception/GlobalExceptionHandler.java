@@ -11,49 +11,99 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleCustomException(
+            CustomException ex) {
 
         ApiResponse<Object> response =
-                new ApiResponse<>(false, ex.getMessage(), null);
+                new ApiResponse<>(
+                        false,
+                        ex.getMessage(),
+                        null
+                );
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleResourceNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleResourceNotFound(
+            ResourceNotFoundException ex) {
 
         ApiResponse<Object> response =
-                new ApiResponse<>(false, ex.getMessage(), null);
+                new ApiResponse<>(
+                        false,
+                        ex.getMessage(),
+                        null
+                );
 
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.NOT_FOUND
+        );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex){
+    public ResponseEntity<ApiResponse<Object>> handleValidation(
+            MethodArgumentNotValidException ex) {
 
         String error = ex.getBindingResult()
+                .getFieldError() != null
+                ? ex.getBindingResult()
                 .getFieldError()
-                .getDefaultMessage();
+                .getDefaultMessage()
+                : "Validation failed.";
 
-        return ResponseEntity.badRequest().body(
-                new ApiResponse<>(false,error,null)
-        );
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ApiResponse<>(
+                                false,
+                                error,
+                                null
+                        )
+                );
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Object>> handleBusinessException(
-            BusinessException ex
-    ) {
+            BusinessException ex) {
+
+        String message = ex.getMessage();
 
         ApiResponse<Object> response =
-                new ApiResponse<>(false, ex.getMessage(), null);
+                new ApiResponse<>(
+                        false,
+                        message,
+                        null
+                );
 
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
-        if ("Business not found.".equalsIgnoreCase(ex.getMessage())) {
+        if ("Business not found.".equalsIgnoreCase(message)) {
+
             status = HttpStatus.NOT_FOUND;
+
+        } else if ("Subscription not found.".equalsIgnoreCase(message)) {
+
+            status = HttpStatus.NOT_FOUND;
+
+        } else if ("Your subscription has expired. Please renew your plan."
+                .equalsIgnoreCase(message)) {
+
+            status = HttpStatus.FORBIDDEN;
+
+        } else if ("This business is currently unavailable. Please try again later."
+                .equalsIgnoreCase(message)) {
+
+            status = HttpStatus.FORBIDDEN;
+
         }
 
-        return new ResponseEntity<>(response, status);
+        return new ResponseEntity<>(
+                response,
+                status
+        );
     }
 }

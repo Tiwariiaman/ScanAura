@@ -7,7 +7,10 @@ import com.scanaura.publicapi.dto.PaymentResponse;
 import com.scanaura.publicapi.service.PublicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/public")
@@ -18,13 +21,12 @@ public class PublicController {
 
     @GetMapping("/q/{qrCode}")
     public ResponseEntity<ApiResponse<LandingResponse>> landing(
-            @PathVariable String qrCode
-    ) {
+            @PathVariable String qrCode) {
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Landing page loaded.",
+                        "Landing page fetched successfully.",
                         publicService.getLandingPage(qrCode)
                 )
         );
@@ -32,13 +34,12 @@ public class PublicController {
 
     @GetMapping("/q/{qrCode}/menu")
     public ResponseEntity<ApiResponse<MenuResponse>> menu(
-            @PathVariable String qrCode
-    ) {
+            @PathVariable String qrCode) {
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Menu loaded.",
+                        "Menu fetched successfully.",
                         publicService.getMenu(qrCode)
                 )
         );
@@ -46,13 +47,12 @@ public class PublicController {
 
     @GetMapping("/q/{qrCode}/payment")
     public ResponseEntity<ApiResponse<PaymentResponse>> payment(
-            @PathVariable String qrCode
-    ) {
+            @PathVariable String qrCode) {
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Payment details loaded.",
+                        "Payment details fetched successfully.",
                         publicService.getPaymentDetails(qrCode)
                 )
         );
