@@ -8,6 +8,7 @@ import com.scanaura.business.repository.BusinessRepository;
 import com.scanaura.business.service.BusinessService;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.image.service.ImageService;
 import com.scanaura.qr.service.QrService;
 import com.scanaura.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class BusinessServiceImpl implements BusinessService {
     private final BusinessRepository businessRepository;
     private final QrService qrService;
     private final SubscriptionService subscriptionService;
+    private final ImageService imageService;
 
     @Override
     @Transactional
@@ -41,45 +43,63 @@ public class BusinessServiceImpl implements BusinessService {
         Business business = new Business();
 
         business.setOwner(currentUser);
+
         business.setBusinessName(
                 request.getBusinessName()
         );
+
         business.setBusinessType(
                 request.getBusinessType()
         );
+
         business.setPhone(
                 request.getPhone()
         );
+
         business.setLogoUrl(
                 request.getLogoUrl()
         );
+
+        business.setLogoPublicId(
+                request.getLogoPublicId()
+        );
+
         business.setWhatsapp(
                 request.getWhatsapp()
         );
+
         business.setEmail(
                 request.getEmail()
         );
+
         business.setAddress(
                 request.getAddress()
         );
+
         business.setCity(
                 request.getCity()
         );
+
         business.setState(
                 request.getState()
         );
+
         business.setCountry(
                 request.getCountry()
         );
+
         business.setPincode(
                 request.getPincode()
         );
+
         business.setWebsite(
                 request.getWebsite()
         );
+
         business.setDescription(
                 request.getDescription()
         );
+
         business.setUpiId(
                 request.getUpiId()
         );
@@ -139,6 +159,7 @@ public class BusinessServiceImpl implements BusinessService {
     }
 
     @Override
+    @Transactional
     public BusinessResponse updateBusiness(
             BusinessRequest request
     ) {
@@ -153,6 +174,60 @@ public class BusinessServiceImpl implements BusinessService {
                                         "Business not found."
                                 ));
 
+        String oldLogoPublicId =
+                business.getLogoPublicId();
+
+        /*
+         * Update the logo only when a new Cloudinary
+         * public ID is supplied.
+         *
+         * This prevents normal business updates from
+         * accidentally removing the existing logo.
+         */
+        if (request.getLogoPublicId() != null
+                && !request.getLogoPublicId()
+                .trim()
+                .isEmpty()) {
+
+            String newLogoPublicId =
+                    request.getLogoPublicId().trim();
+
+            business.setLogoUrl(
+                    request.getLogoUrl()
+            );
+
+            business.setLogoPublicId(
+                    newLogoPublicId
+            );
+
+            /*
+             * Delete the old Cloudinary image only when
+             * it is different from the new image.
+             */
+            if (oldLogoPublicId != null
+                    && !oldLogoPublicId.trim().isEmpty()
+                    && !oldLogoPublicId
+                    .trim()
+                    .equals(newLogoPublicId)) {
+
+                imageService.delete(
+                        oldLogoPublicId.trim()
+                );
+            }
+
+        } else if (request.getLogoUrl() != null
+                && !request.getLogoUrl().trim().isEmpty()) {
+
+            /*
+             * Backward compatibility:
+             * keep the old public ID when an older
+             * frontend sends only logoUrl.
+             */
+            business.setLogoUrl(
+                    request.getLogoUrl()
+            );
+        }
+
         business.setBusinessName(
                 request.getBusinessName()
         );
@@ -163,10 +238,6 @@ public class BusinessServiceImpl implements BusinessService {
 
         business.setPhone(
                 request.getPhone()
-        );
-
-        business.setLogoUrl(
-                request.getLogoUrl()
         );
 
         business.setWhatsapp(
@@ -216,9 +287,6 @@ public class BusinessServiceImpl implements BusinessService {
         /*
          * Only update feature toggles when the request
          * actually provides them.
-         *
-         * This prevents older frontend requests from
-         * accidentally resetting existing settings.
          */
         if (request.getGoogleReviewEnabled() != null) {
             business.setGoogleReviewEnabled(
@@ -239,6 +307,7 @@ public class BusinessServiceImpl implements BusinessService {
     }
 
     @Override
+    @Transactional
     public void deleteBusiness() {
 
         User currentUser =
@@ -251,7 +320,22 @@ public class BusinessServiceImpl implements BusinessService {
                                         "Business not found."
                                 ));
 
+        String logoPublicId =
+                business.getLogoPublicId();
+
         businessRepository.delete(business);
+
+        /*
+         * Remove the business logo from Cloudinary
+         * after the business has been deleted.
+         */
+        if (logoPublicId != null
+                && !logoPublicId.trim().isEmpty()) {
+
+            imageService.delete(
+                    logoPublicId.trim()
+            );
+        }
     }
 
     private BusinessResponse mapToResponse(

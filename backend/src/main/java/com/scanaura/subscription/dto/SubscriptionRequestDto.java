@@ -24,4 +24,5 @@ public class SubscriptionRequestDto {
     @NotBlank(message = "Payment screenshot is required.")
     private String paymentScreenshotUrl;
 
+    private String paymentScreenshotPublicId;
 }

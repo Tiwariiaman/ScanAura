@@ -13,7 +13,6 @@ import java.util.UUID;
 @Setter
 public class CatalogRequest {
 
-    // Optional
     private UUID categoryId;
 
     @NotBlank(message = "Item name is required")
@@ -22,10 +21,16 @@ public class CatalogRequest {
     private String description;
 
     @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than zero")
+    @DecimalMin(
+            value = "0.0",
+            inclusive = false,
+            message = "Price must be greater than zero"
+    )
     private BigDecimal price;
 
     private String imageUrl;
+
+    private String imagePublicId;
 
     private Boolean veg = true;
 
@@ -36,5 +41,4 @@ public class CatalogRequest {
     private Boolean recommended = false;
 
     private Integer displayOrder = 0;
-
 }

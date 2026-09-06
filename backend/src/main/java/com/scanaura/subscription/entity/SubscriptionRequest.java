@@ -31,6 +31,9 @@ public class SubscriptionRequest extends BaseEntity {
     @Column(nullable = false, length = 500)
     private String paymentScreenshotUrl;
 
+    @Column(length = 500)
+    private String paymentScreenshotPublicId;
+
     @Column(nullable = false, length = 100)
     private String transactionId;
 
@@ -40,5 +43,4 @@ public class SubscriptionRequest extends BaseEntity {
 
     @Column(length = 500)
     private String adminRemark;
-
 }

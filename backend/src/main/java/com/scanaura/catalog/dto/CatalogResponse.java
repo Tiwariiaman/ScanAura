@@ -30,6 +30,8 @@ public class CatalogResponse {
 
     private String imageUrl;
 
+    private String imagePublicId;
+
     private Boolean veg;
 
     private Boolean available;
@@ -41,5 +43,4 @@ public class CatalogResponse {
     private Integer displayOrder;
 
     private Boolean active;
-
 }

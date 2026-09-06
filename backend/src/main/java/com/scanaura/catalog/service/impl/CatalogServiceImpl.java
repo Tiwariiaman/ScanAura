@@ -12,8 +12,10 @@ import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.image.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +27,7 @@ public class CatalogServiceImpl implements CatalogService {
     private final CatalogRepository catalogRepository;
     private final BusinessRepository businessRepository;
     private final CategoryRepository categoryRepository;
+    private final ImageService imageService;
 
     @Override
     public CatalogResponse createCatalog(CatalogRequest request) {
@@ -32,7 +35,8 @@ public class CatalogServiceImpl implements CatalogService {
         User currentUser = SecurityUtil.getCurrentUser();
 
         Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() -> new BusinessException("Business not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
         Category category = null;
 
@@ -40,7 +44,8 @@ public class CatalogServiceImpl implements CatalogService {
             category = categoryRepository.findByIdAndBusiness(
                             request.getCategoryId(),
                             business)
-                    .orElseThrow(() -> new BusinessException("Category not found."));
+                    .orElseThrow(() ->
+                            new BusinessException("Category not found."));
         }
 
         Catalog catalog = new Catalog();
@@ -52,6 +57,7 @@ public class CatalogServiceImpl implements CatalogService {
         catalog.setDescription(request.getDescription());
         catalog.setPrice(request.getPrice());
         catalog.setImageUrl(request.getImageUrl());
+        catalog.setImagePublicId(request.getImagePublicId());
 
         catalog.setVeg(request.getVeg());
         catalog.setAvailable(request.getAvailable());
@@ -72,7 +78,8 @@ public class CatalogServiceImpl implements CatalogService {
         User currentUser = SecurityUtil.getCurrentUser();
 
         Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() -> new BusinessException("Business not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
         return catalogRepository.findByBusinessOrderByDisplayOrderAsc(business)
                 .stream()
@@ -86,29 +93,36 @@ public class CatalogServiceImpl implements CatalogService {
         User currentUser = SecurityUtil.getCurrentUser();
 
         Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() -> new BusinessException("Business not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
         Catalog catalog = catalogRepository.findByIdAndBusiness(
                         catalogId,
                         business)
-                .orElseThrow(() -> new BusinessException("Catalog not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Catalog not found."));
 
         return mapToResponse(catalog);
     }
 
     @Override
-    public CatalogResponse updateCatalog(UUID catalogId,
-                                         CatalogRequest request) {
+    @Transactional
+    public CatalogResponse updateCatalog(
+            UUID catalogId,
+            CatalogRequest request
+    ) {
 
         User currentUser = SecurityUtil.getCurrentUser();
 
         Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() -> new BusinessException("Business not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
         Catalog catalog = catalogRepository.findByIdAndBusiness(
                         catalogId,
                         business)
-                .orElseThrow(() -> new BusinessException("Catalog not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Catalog not found."));
 
         Category category = null;
 
@@ -116,7 +130,33 @@ public class CatalogServiceImpl implements CatalogService {
             category = categoryRepository.findByIdAndBusiness(
                             request.getCategoryId(),
                             business)
-                    .orElseThrow(() -> new BusinessException("Category not found."));
+                    .orElseThrow(() ->
+                            new BusinessException("Category not found."));
+        }
+
+        String oldImagePublicId = catalog.getImagePublicId();
+
+        if (request.getImagePublicId() != null
+                && !request.getImagePublicId().trim().isEmpty()) {
+
+            String newImagePublicId =
+                    request.getImagePublicId().trim();
+
+            catalog.setImageUrl(request.getImageUrl());
+            catalog.setImagePublicId(newImagePublicId);
+
+            if (oldImagePublicId != null
+                    && !oldImagePublicId.trim().isEmpty()
+                    && !oldImagePublicId.trim()
+                    .equals(newImagePublicId)) {
+
+                imageService.delete(oldImagePublicId.trim());
+            }
+
+        } else if (request.getImageUrl() != null
+                && !request.getImageUrl().trim().isEmpty()) {
+
+            catalog.setImageUrl(request.getImageUrl());
         }
 
         catalog.setCategory(category);
@@ -124,7 +164,6 @@ public class CatalogServiceImpl implements CatalogService {
         catalog.setName(request.getName());
         catalog.setDescription(request.getDescription());
         catalog.setPrice(request.getPrice());
-        catalog.setImageUrl(request.getImageUrl());
 
         catalog.setVeg(request.getVeg());
         catalog.setAvailable(request.getAvailable());
@@ -139,19 +178,32 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     @Override
+    @Transactional
     public void deleteCatalog(UUID catalogId) {
 
         User currentUser = SecurityUtil.getCurrentUser();
 
         Business business = businessRepository.findByOwner(currentUser)
-                .orElseThrow(() -> new BusinessException("Business not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
         Catalog catalog = catalogRepository.findByIdAndBusiness(
                         catalogId,
                         business)
-                .orElseThrow(() -> new BusinessException("Catalog not found."));
+                .orElseThrow(() ->
+                        new BusinessException("Catalog not found."));
+
+        String imagePublicId = catalog.getImagePublicId();
 
         catalogRepository.delete(catalog);
+
+        if (imagePublicId != null
+                && !imagePublicId.trim().isEmpty()) {
+
+            imageService.delete(
+                    imagePublicId.trim()
+            );
+        }
     }
 
     private CatalogResponse mapToResponse(Catalog catalog) {
@@ -172,6 +224,7 @@ public class CatalogServiceImpl implements CatalogService {
                 .description(catalog.getDescription())
                 .price(catalog.getPrice())
                 .imageUrl(catalog.getImageUrl())
+                .imagePublicId(catalog.getImagePublicId())
                 .veg(catalog.getVeg())
                 .available(catalog.getAvailable())
                 .bestSeller(catalog.getBestSeller())

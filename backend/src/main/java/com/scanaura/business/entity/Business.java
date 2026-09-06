@@ -26,6 +26,9 @@ public class Business extends BaseEntity {
 
     private String logoUrl;
 
+    @Column(length = 500)
+    private String logoPublicId;
+
     @Column(nullable = false)
     private String phone;
 

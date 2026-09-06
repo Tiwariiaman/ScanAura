@@ -22,6 +22,8 @@ public class BusinessResponse {
 
     private String logoUrl;
 
+    private String logoPublicId;
+
     private String phone;
 
     private String whatsapp;

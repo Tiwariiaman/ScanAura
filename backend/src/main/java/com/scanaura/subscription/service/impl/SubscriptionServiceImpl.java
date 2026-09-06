@@ -8,6 +8,7 @@ import com.scanaura.common.enums.RequestStatus;
 import com.scanaura.common.enums.SubscriptionStatus;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
+import com.scanaura.image.service.ImageService;
 import com.scanaura.subscription.dto.*;
 import com.scanaura.subscription.entity.Plan;
 import com.scanaura.subscription.entity.Subscription;
@@ -18,6 +19,7 @@ import com.scanaura.subscription.repository.SubscriptionRequestRepository;
 import com.scanaura.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +35,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final PlanRepository planRepository;
     private final BusinessRepository businessRepository;
     private final SubscriptionRequestRepository subscriptionRequestRepository;
+    private final ImageService imageService;
 
     @Override
     public void createTrialSubscription(Business business) {
@@ -59,6 +62,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscription.setBusiness(business);
         subscription.setPlan(trialPlan);
+
         subscription.setStatus(SubscriptionStatus.TRIAL);
         subscription.setBillingCycle(BillingCycle.MONTHLY);
 
@@ -70,9 +74,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         );
 
         subscription.setAiImportUsed(0);
-
-        business.setActive(true);
-        businessRepository.save(business);
 
         subscriptionRepository.save(subscription);
     }
@@ -92,65 +93,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .orElseThrow(() ->
                         new BusinessException("Subscription not found."));
 
-        expireIfNecessary(
-                subscription,
-                business
+        long daysLeft = ChronoUnit.DAYS.between(
+                LocalDate.now(),
+                subscription.getEndDate()
         );
 
-        long daysLeft = 0;
-
-        if (subscription.getEndDate() != null) {
-            daysLeft = ChronoUnit.DAYS.between(
-                    LocalDate.now(),
-                    subscription.getEndDate()
-            );
-
-            if (daysLeft < 0) {
-                daysLeft = 0;
-            }
+        if (daysLeft < 0) {
+            daysLeft = 0;
         }
 
-        return mapToResponse(
-                subscription,
-                (int) daysLeft
-        );
-    }
-
-    private void expireIfNecessary(
-            Subscription subscription,
-            Business business
-    ) {
-
-        if (subscription.getStatus() ==
-                SubscriptionStatus.CANCELLED) {
-            business.setActive(false);
-            businessRepository.save(business);
-            return;
-        }
-
-        if (subscription.getStatus() ==
-                SubscriptionStatus.EXPIRED) {
-            if (Boolean.TRUE.equals(business.getActive())) {
-                business.setActive(false);
-                businessRepository.save(business);
-            }
-            return;
-        }
-
-        LocalDate endDate = subscription.getEndDate();
-
-        if (endDate != null &&
-                LocalDate.now().isAfter(endDate)) {
-
-            subscription.setStatus(
-                    SubscriptionStatus.EXPIRED
-            );
-
-            subscriptionRepository.save(subscription);
-
-            business.setActive(false);
-            businessRepository.save(business);
-        }
+        return mapToResponse(subscription, (int) daysLeft);
     }
 
     private SubscriptionResponse mapToResponse(
@@ -210,9 +162,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                         RequestStatus.PENDING
                 )
                 .ifPresent(req -> {
+
                     throw new BusinessException(
                             "You already have a pending payment request."
                     );
+
                 });
 
         Plan plan = planRepository
@@ -224,6 +178,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 new SubscriptionRequest();
 
         subscriptionRequest.setBusiness(business);
+
         subscriptionRequest.setPlan(plan);
 
         subscriptionRequest.setBillingCycle(
@@ -236,6 +191,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscriptionRequest.setPaymentScreenshotUrl(
                 request.getPaymentScreenshotUrl()
+        );
+
+        subscriptionRequest.setPaymentScreenshotPublicId(
+                request.getPaymentScreenshotPublicId()
         );
 
         subscriptionRequest.setStatus(
@@ -255,37 +214,48 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .findByStatus(RequestStatus.PENDING)
                 .stream()
                 .map(request ->
+
                         PendingSubscriptionRequestResponse
                                 .builder()
+
                                 .requestId(request.getId())
+
                                 .businessId(
                                         request.getBusiness().getId()
                                 )
+
                                 .businessName(
                                         request.getBusiness()
                                                 .getBusinessName()
                                 )
+
                                 .planName(
                                         request.getPlan().getName()
                                 )
+
                                 .billingCycle(
                                         request.getBillingCycle()
                                 )
+
                                 .transactionId(
                                         request.getTransactionId()
                                 )
+
                                 .paymentScreenshotUrl(
                                         request.getPaymentScreenshotUrl()
                                 )
+
                                 .requestedAt(
                                         request.getCreatedAt()
                                 )
+
                                 .build()
-                )
-                .toList();
+
+                ).toList();
     }
 
     @Override
+    @Transactional
     public void approveRequest(UUID requestId) {
 
         SubscriptionRequest request =
@@ -296,11 +266,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                                         "Request not found."
                                 ));
 
-        Business business = request.getBusiness();
-
         Subscription subscription =
                 subscriptionRepository
-                        .findByBusiness(business)
+                        .findByBusiness(
+                                request.getBusiness()
+                        )
                         .orElseThrow(() ->
                                 new BusinessException(
                                         "Subscription not found."
@@ -338,20 +308,26 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscriptionRepository.save(subscription);
 
-        /*
-         * IMPORTANT:
-         * Re-enable the business after successful renewal.
-         * The QR code itself is never deleted or regenerated.
-         */
-        business.setActive(true);
-
-        businessRepository.save(business);
-
         request.setStatus(
                 RequestStatus.APPROVED
         );
 
         subscriptionRequestRepository.save(request);
+
+        String paymentScreenshotPublicId =
+                request.getPaymentScreenshotPublicId();
+
+        if (paymentScreenshotPublicId != null
+                && !paymentScreenshotPublicId.trim().isEmpty()) {
+
+            imageService.delete(
+                    paymentScreenshotPublicId.trim()
+            );
+
+            request.setPaymentScreenshotPublicId(null);
+
+            subscriptionRequestRepository.save(request);
+        }
     }
 
     @Override
@@ -396,6 +372,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .findByBusiness(business)
                 .stream()
                 .map(request ->
+
                         SubscriptionRequestHistoryResponse
                                 .builder()
                                 .planName(
@@ -420,6 +397,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                                         request.getCreatedAt()
                                 )
                                 .build()
+
                 )
                 .toList();
     }

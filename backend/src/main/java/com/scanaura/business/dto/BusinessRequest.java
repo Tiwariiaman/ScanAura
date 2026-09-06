@@ -21,6 +21,8 @@ public class BusinessRequest {
 
     private String logoUrl;
 
+    private String logoPublicId;
+
     private String whatsapp;
 
     private String email;

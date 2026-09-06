@@ -34,6 +34,9 @@ public class Catalog extends BaseEntity {
 
     private String imageUrl;
 
+    @Column(length = 500)
+    private String imagePublicId;
+
     @Column(nullable = false)
     private Boolean veg = true;
 
@@ -51,7 +54,4 @@ public class Catalog extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean recommended = false;
-
-
-
 }
