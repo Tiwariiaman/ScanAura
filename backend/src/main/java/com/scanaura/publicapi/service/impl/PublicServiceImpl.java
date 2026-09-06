@@ -35,15 +35,30 @@ public class PublicServiceImpl implements PublicService {
 
         Business business = getBusiness(qrCode);
 
-        subscriptionValidationService.validateBusinessAccess(business);
-
         boolean paymentAvailable =
-                hasValue(business.getUpiId())
-                        && Boolean.TRUE.equals(business.getPaymentEnabled());
+                business.getUpiId() != null &&
+                        !business.getUpiId().isBlank() &&
+                        Boolean.TRUE.equals(business.getPaymentEnabled());
 
         boolean googleReviewAvailable =
-                hasValue(business.getGoogleReviewUrl())
-                        && Boolean.TRUE.equals(business.getGoogleReviewEnabled());
+                business.getGoogleReviewUrl() != null &&
+                        !business.getGoogleReviewUrl().isBlank() &&
+                        Boolean.TRUE.equals(business.getGoogleReviewEnabled());
+
+        boolean instagramAvailable =
+                business.getInstagramUrl() != null &&
+                        !business.getInstagramUrl().isBlank() &&
+                        Boolean.TRUE.equals(business.getInstagramEnabled());
+
+        boolean facebookAvailable =
+                business.getFacebookUrl() != null &&
+                        !business.getFacebookUrl().isBlank() &&
+                        Boolean.TRUE.equals(business.getFacebookEnabled());
+
+        boolean youtubeAvailable =
+                business.getYoutubeUrl() != null &&
+                        !business.getYoutubeUrl().isBlank() &&
+                        Boolean.TRUE.equals(business.getYoutubeEnabled());
 
         return LandingResponse.builder()
                 .businessName(business.getBusinessName())
@@ -51,13 +66,38 @@ public class PublicServiceImpl implements PublicService {
                 .city(business.getCity())
                 .logoUrl(business.getLogoUrl())
                 .menuAvailable(true)
+
+                // Effective public availability
                 .paymentEnabled(paymentAvailable)
+
                 .googleReviewUrl(
                         googleReviewAvailable
                                 ? business.getGoogleReviewUrl()
                                 : null
                 )
                 .googleReviewEnabled(googleReviewAvailable)
+
+                .instagramUrl(
+                        instagramAvailable
+                                ? business.getInstagramUrl()
+                                : null
+                )
+                .instagramEnabled(instagramAvailable)
+
+                .facebookUrl(
+                        facebookAvailable
+                                ? business.getFacebookUrl()
+                                : null
+                )
+                .facebookEnabled(facebookAvailable)
+
+                .youtubeUrl(
+                        youtubeAvailable
+                                ? business.getYoutubeUrl()
+                                : null
+                )
+                .youtubeEnabled(youtubeAvailable)
+
                 .build();
     }
 

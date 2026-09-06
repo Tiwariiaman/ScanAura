@@ -55,4 +55,13 @@ public class BusinessResponse {
     private String qrSlug;
 
     private Boolean active;
+
+    private String instagramUrl;
+    private Boolean instagramEnabled;
+
+    private String facebookUrl;
+    private Boolean facebookEnabled;
+
+    private String youtubeUrl;
+    private Boolean youtubeEnabled;
 }

@@ -124,6 +124,21 @@ public class BusinessServiceImpl implements BusinessService {
                 UUID.randomUUID().toString()
         );
 
+        business.setInstagramUrl(request.getInstagramUrl());
+        business.setInstagramEnabled(
+                Boolean.TRUE.equals(request.getInstagramEnabled())
+        );
+
+        business.setFacebookUrl(request.getFacebookUrl());
+        business.setFacebookEnabled(
+                Boolean.TRUE.equals(request.getFacebookEnabled())
+        );
+
+        business.setYoutubeUrl(request.getYoutubeUrl());
+        business.setYoutubeEnabled(
+                Boolean.TRUE.equals(request.getYoutubeEnabled())
+        );
+
         business.setActive(true);
 
         Business savedBusiness =
@@ -300,6 +315,36 @@ public class BusinessServiceImpl implements BusinessService {
             );
         }
 
+        if (request.getInstagramUrl() != null) {
+            business.setInstagramUrl(request.getInstagramUrl());
+        }
+
+        if (request.getInstagramEnabled() != null) {
+            business.setInstagramEnabled(
+                    request.getInstagramEnabled()
+            );
+        }
+
+        if (request.getFacebookUrl() != null) {
+            business.setFacebookUrl(request.getFacebookUrl());
+        }
+
+        if (request.getFacebookEnabled() != null) {
+            business.setFacebookEnabled(
+                    request.getFacebookEnabled()
+            );
+        }
+
+        if (request.getYoutubeUrl() != null) {
+            business.setYoutubeUrl(request.getYoutubeUrl());
+        }
+
+        if (request.getYoutubeEnabled() != null) {
+            business.setYoutubeEnabled(
+                    request.getYoutubeEnabled()
+            );
+        }
+
         Business updatedBusiness =
                 businessRepository.save(business);
 
@@ -399,6 +444,24 @@ public class BusinessServiceImpl implements BusinessService {
                 )
                 .qrSlug(
                         business.getQrSlug()
+                )
+                .instagramUrl(
+                        business.getInstagramUrl()
+                )
+                .instagramEnabled(
+                        business.getInstagramEnabled()
+                )
+                .facebookUrl(
+                        business.getFacebookUrl()
+                )
+                .facebookEnabled(
+                        business.getFacebookEnabled()
+                )
+                .youtubeUrl(
+                        business.getYoutubeUrl()
+                )
+                .youtubeEnabled(
+                        business.getYoutubeEnabled()
                 )
                 .active(
                         business.getActive()

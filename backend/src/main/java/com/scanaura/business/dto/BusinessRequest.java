@@ -48,4 +48,13 @@ public class BusinessRequest {
     private Boolean googleReviewEnabled;
 
     private Boolean paymentEnabled;
+
+    private String instagramUrl;
+    private Boolean instagramEnabled;
+
+    private String facebookUrl;
+    private Boolean facebookEnabled;
+
+    private String youtubeUrl;
+    private Boolean youtubeEnabled;
 }

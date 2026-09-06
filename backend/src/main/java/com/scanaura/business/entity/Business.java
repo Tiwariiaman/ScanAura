@@ -67,4 +67,22 @@ public class Business extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean active = true;
+
+    @Column(length = 500)
+    private String instagramUrl;
+
+    @Column(nullable = false)
+    private Boolean instagramEnabled = false;
+
+    @Column(length = 500)
+    private String facebookUrl;
+
+    @Column(nullable = false)
+    private Boolean facebookEnabled = false;
+
+    @Column(length = 500)
+    private String youtubeUrl;
+
+    @Column(nullable = false)
+    private Boolean youtubeEnabled = false;
 }
