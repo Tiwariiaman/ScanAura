@@ -401,4 +401,52 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 )
                 .toList();
     }
+
+    @Override
+    @Transactional
+    public void grantSubscription(
+            UUID businessId,
+            String planName,
+            BillingCycle billingCycle
+    ) {
+
+        Business business = businessRepository
+                .findById(businessId)
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
+
+        Plan plan = planRepository
+                .findByNameIgnoreCase(planName)
+                .orElseThrow(() ->
+                        new BusinessException("Plan not found."));
+
+        if (!Boolean.TRUE.equals(plan.getActive())) {
+            throw new BusinessException("Selected plan is inactive.");
+        }
+
+        Subscription subscription = subscriptionRepository
+                .findByBusiness(business)
+                .orElseThrow(() ->
+                        new BusinessException("Subscription not found."));
+
+        LocalDate today = LocalDate.now();
+
+        subscription.setPlan(plan);
+        subscription.setBillingCycle(billingCycle);
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setStartDate(today);
+        subscription.setAiImportUsed(0);
+
+        if (billingCycle == BillingCycle.MONTHLY) {
+            subscription.setEndDate(
+                    today.plusMonths(1)
+            );
+        } else {
+            subscription.setEndDate(
+                    today.plusYears(1)
+            );
+        }
+
+        subscriptionRepository.save(subscription);
+    }
 }

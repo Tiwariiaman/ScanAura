@@ -14,6 +14,7 @@ import com.scanaura.publicapi.dto.PaymentResponse;
 import com.scanaura.publicapi.service.PublicService;
 import com.scanaura.qr.entity.QrCode;
 import com.scanaura.qr.repository.QrCodeRepository;
+import com.scanaura.qr.service.QrScanService;
 import com.scanaura.subscription.service.SubscriptionValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,11 +30,15 @@ public class PublicServiceImpl implements PublicService {
     private final CategoryRepository categoryRepository;
     private final CatalogRepository catalogRepository;
     private final SubscriptionValidationService subscriptionValidationService;
+    private final QrScanService qrScanService;
 
     @Override
     public LandingResponse getLandingPage(String qrCode) {
 
         Business business = getBusiness(qrCode);
+
+        // Record one scan for the validated public QR landing visit.
+        qrScanService.recordScan(qrCode);
 
         boolean paymentAvailable =
                 business.getUpiId() != null &&

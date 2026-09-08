@@ -15,6 +15,7 @@ import com.scanaura.qr.dto.QrResponse;
 import com.scanaura.qr.dto.QrStockResponse;
 import com.scanaura.qr.entity.QrCode;
 import com.scanaura.qr.repository.QrCodeRepository;
+import com.scanaura.qr.repository.QrScanDailyRepository;
 import com.scanaura.qr.service.QrService;
 import com.scanaura.subscription.entity.Subscription;
 import com.scanaura.subscription.repository.SubscriptionRepository;
@@ -22,6 +23,7 @@ import com.scanaura.subscription.repository.SubscriptionRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,9 +35,8 @@ public class AdminServiceImpl implements AdminService {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionRequestRepository subscriptionRequestRepository;
     private final QrCodeRepository qrCodeRepository;
+    private final QrScanDailyRepository qrScanDailyRepository;
     private final QrService qrService;
-
-
 
     @Override
     public DashboardResponse getDashboard() {
@@ -155,6 +156,38 @@ public class AdminServiceImpl implements AdminService {
                         .findByBusiness(business)
                         .orElse(null);
 
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate last7DaysStart = today.minusDays(6);
+
+        long todayScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDate(
+                                business,
+                                today
+                        );
+
+        long yesterdayScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDate(
+                                business,
+                                yesterday
+                        );
+
+        long last7DaysScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDateRange(
+                                business,
+                                last7DaysStart,
+                                today
+                        );
+
+        long totalScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusiness(
+                                business
+                        );
+
         return BusinessSummaryResponse.builder()
 
                 .businessId(
@@ -197,9 +230,16 @@ public class AdminServiceImpl implements AdminService {
                                 : null
                 )
 
+                .todayScans(todayScans)
+
+                .yesterdayScans(yesterdayScans)
+
+                .last7DaysScans(last7DaysScans)
+
+                .totalScans(totalScans)
+
                 .build();
     }
-
 
     @Override
     public QrInventoryResponse getQrInventory() {

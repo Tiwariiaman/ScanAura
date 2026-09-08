@@ -30,4 +30,11 @@ public class BusinessSummaryResponse {
 
     private String currentPlan;
 
+    private Long todayScans;
+
+    private Long yesterdayScans;
+
+    private Long last7DaysScans;
+
+    private Long totalScans;
 }

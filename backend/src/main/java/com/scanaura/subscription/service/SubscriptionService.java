@@ -1,6 +1,7 @@
 package com.scanaura.subscription.service;
 
 import com.scanaura.business.entity.Business;
+import com.scanaura.common.enums.BillingCycle;
 import com.scanaura.subscription.dto.*;
 
 import java.util.List;
@@ -27,4 +28,10 @@ public interface SubscriptionService {
     );
 
     List<SubscriptionRequestHistoryResponse> getRequestHistory();
+
+    void grantSubscription(
+            UUID businessId,
+            String planName,
+            BillingCycle billingCycle
+    );
 }

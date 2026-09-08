@@ -3,6 +3,8 @@ package com.scanaura.subscription.controller;
 import com.scanaura.common.response.ApiResponse;
 import com.scanaura.subscription.dto.PendingSubscriptionRequestResponse;
 import com.scanaura.subscription.dto.RejectRequest;
+import com.scanaura.subscription.entity.Plan;
+import com.scanaura.subscription.repository.PlanRepository;
 import com.scanaura.subscription.service.SubscriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +15,18 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/subscription-requests")
 @RequiredArgsConstructor
 public class AdminSubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
-    @GetMapping("/pending")
+    private final PlanRepository planRepository;
+
+    // ============================================================
+    // PENDING SUBSCRIPTION REQUESTS
+    // ============================================================
+
+    @GetMapping("/api/v1/admin/subscription-requests/pending")
     public ResponseEntity<ApiResponse<List<PendingSubscriptionRequestResponse>>> getPendingRequests() {
 
         return ResponseEntity.ok(
@@ -31,7 +38,11 @@ public class AdminSubscriptionController {
         );
     }
 
-    @PostMapping("/{requestId}/approve")
+    // ============================================================
+    // APPROVE SUBSCRIPTION REQUEST
+    // ============================================================
+
+    @PostMapping("/api/v1/admin/subscription-requests/{requestId}/approve")
     public ResponseEntity<ApiResponse<String>> approveRequest(
             @PathVariable UUID requestId
     ) {
@@ -47,13 +58,20 @@ public class AdminSubscriptionController {
         );
     }
 
-    @PostMapping("/{requestId}/reject")
+    // ============================================================
+    // REJECT SUBSCRIPTION REQUEST
+    // ============================================================
+
+    @PostMapping("/api/v1/admin/subscription-requests/{requestId}/reject")
     public ResponseEntity<ApiResponse<String>> rejectRequest(
             @PathVariable UUID requestId,
             @Valid @RequestBody RejectRequest request
     ) {
 
-        subscriptionService.rejectRequest(requestId, request);
+        subscriptionService.rejectRequest(
+                requestId,
+                request
+        );
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
@@ -64,4 +82,20 @@ public class AdminSubscriptionController {
         );
     }
 
+    // ============================================================
+    // ACTIVE PLANS
+    // ============================================================
+
+    @GetMapping("/api/v1/admin/subscriptions/plans")
+    public ResponseEntity<ApiResponse<List<Plan>>> getActivePlans() {
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Active plans fetched successfully.",
+                        planRepository
+                                .findByActiveTrueOrderByNameAsc()
+                )
+        );
+    }
 }

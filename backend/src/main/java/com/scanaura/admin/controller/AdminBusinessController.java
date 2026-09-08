@@ -2,7 +2,11 @@ package com.scanaura.admin.controller;
 
 import com.scanaura.admin.dto.BusinessSummaryResponse;
 import com.scanaura.admin.service.AdminService;
+import com.scanaura.common.enums.BillingCycle;
 import com.scanaura.common.response.ApiResponse;
+import com.scanaura.subscription.dto.GrantSubscriptionRequest;
+import com.scanaura.subscription.service.SubscriptionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +20,7 @@ import java.util.UUID;
 public class AdminBusinessController {
 
     private final AdminService adminService;
+    private final SubscriptionService subscriptionService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<BusinessSummaryResponse>>> getAllBusinesses() {
@@ -70,6 +75,27 @@ public class AdminBusinessController {
                 new ApiResponse<>(
                         true,
                         "Business deactivated successfully.",
+                        "SUCCESS"
+                )
+        );
+    }
+
+    @PatchMapping("/{businessId}/subscription")
+    public ResponseEntity<ApiResponse<String>> grantSubscription(
+            @PathVariable UUID businessId,
+            @Valid @RequestBody GrantSubscriptionRequest request
+    ) {
+
+        subscriptionService.grantSubscription(
+                businessId,
+                request.getPlanName(),
+                request.getBillingCycle()
+        );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Subscription granted successfully.",
                         "SUCCESS"
                 )
         );
