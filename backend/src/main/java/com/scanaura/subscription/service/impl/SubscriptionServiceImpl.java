@@ -48,6 +48,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
                     plan.setName("Trial");
                     plan.setMonthlyPrice(BigDecimal.ZERO);
+                    plan.setHalfYearlyPrice(BigDecimal.ZERO);
                     plan.setYearlyPrice(BigDecimal.ZERO);
                     plan.setTrialDays(7);
                     plan.setAiImportLimit(3);
@@ -110,6 +111,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             Integer daysLeft
     ) {
 
+        BigDecimal price = null;
+
+        if (subscription.getBillingCycle() == BillingCycle.MONTHLY) {
+
+            price = subscription.getPlan().getMonthlyPrice();
+
+        } else if (subscription.getBillingCycle() == BillingCycle.HALF_YEARLY) {
+
+            price = subscription.getPlan().getHalfYearlyPrice();
+
+        } else if (subscription.getBillingCycle() == BillingCycle.YEARLY) {
+
+            price = subscription.getPlan().getYearlyPrice();
+        }
+
         return SubscriptionResponse.builder()
                 .planName(
                         subscription.getPlan().getName()
@@ -141,6 +157,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .prioritySupport(
                         subscription.getPlan().getPrioritySupport()
                 )
+                .price(price)
                 .build();
     }
 
@@ -173,6 +190,34 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .findByNameIgnoreCase(request.getPlanName())
                 .orElseThrow(() ->
                         new BusinessException("Plan not found."));
+
+        if (!Boolean.TRUE.equals(plan.getActive())) {
+            throw new BusinessException("Selected plan is inactive.");
+        }
+
+        if (request.getBillingCycle() == BillingCycle.MONTHLY
+                && plan.getMonthlyPrice() == null) {
+
+            throw new BusinessException(
+                    "Monthly pricing is not available for this plan."
+            );
+        }
+
+        if (request.getBillingCycle() == BillingCycle.HALF_YEARLY
+                && plan.getHalfYearlyPrice() == null) {
+
+            throw new BusinessException(
+                    "Half-yearly pricing is not available for this plan."
+            );
+        }
+
+        if (request.getBillingCycle() == BillingCycle.YEARLY
+                && plan.getYearlyPrice() == null) {
+
+            throw new BusinessException(
+                    "Yearly pricing is not available for this plan."
+            );
+        }
 
         SubscriptionRequest subscriptionRequest =
                 new SubscriptionRequest();
@@ -292,17 +337,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 LocalDate.now()
         );
 
-        if (request.getBillingCycle() ==
-                BillingCycle.MONTHLY) {
+        if (request.getBillingCycle() == BillingCycle.MONTHLY) {
 
             subscription.setEndDate(
                     LocalDate.now().plusMonths(1)
             );
 
-        } else {
+        } else if (request.getBillingCycle() == BillingCycle.HALF_YEARLY) {
+
+            subscription.setEndDate(
+                    LocalDate.now().plusMonths(6)
+            );
+
+        } else if (request.getBillingCycle() == BillingCycle.YEARLY) {
 
             subscription.setEndDate(
                     LocalDate.now().plusYears(1)
+            );
+
+        } else {
+
+            throw new BusinessException(
+                    "Unsupported billing cycle."
             );
         }
 
@@ -438,12 +494,27 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscription.setAiImportUsed(0);
 
         if (billingCycle == BillingCycle.MONTHLY) {
+
             subscription.setEndDate(
                     today.plusMonths(1)
             );
-        } else {
+
+        } else if (billingCycle == BillingCycle.HALF_YEARLY) {
+
+            subscription.setEndDate(
+                    today.plusMonths(6)
+            );
+
+        } else if (billingCycle == BillingCycle.YEARLY) {
+
             subscription.setEndDate(
                     today.plusYears(1)
+            );
+
+        } else {
+
+            throw new BusinessException(
+                    "Unsupported billing cycle."
             );
         }
 

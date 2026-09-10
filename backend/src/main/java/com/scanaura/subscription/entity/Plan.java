@@ -41,4 +41,7 @@ public class Plan extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal halfYearlyPrice;
 }

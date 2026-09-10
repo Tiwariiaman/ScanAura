@@ -1,5 +1,7 @@
 package com.scanaura.publicapi.service.impl;
 
+import com.scanaura.activity.loyalty.entity.LoyaltySettings;
+import com.scanaura.activity.loyalty.repository.LoyaltySettingsRepository;
 import com.scanaura.business.entity.Business;
 import com.scanaura.catalog.entity.Catalog;
 import com.scanaura.catalog.repository.CatalogRepository;
@@ -32,6 +34,13 @@ public class PublicServiceImpl implements PublicService {
     private final SubscriptionValidationService subscriptionValidationService;
     private final QrScanService qrScanService;
 
+    /*
+     * Loyalty settings are controlled separately from Business.
+     * The businessId stored in LoyaltySettings is used to determine
+     * whether loyalty is enabled for the public landing page.
+     */
+    private final LoyaltySettingsRepository loyaltySettingsRepository;
+
     @Override
     public LandingResponse getLandingPage(String qrCode) {
 
@@ -41,67 +50,101 @@ public class PublicServiceImpl implements PublicService {
         qrScanService.recordScan(qrCode);
 
         boolean paymentAvailable =
-                business.getUpiId() != null &&
-                        !business.getUpiId().isBlank() &&
-                        Boolean.TRUE.equals(business.getPaymentEnabled());
+                business.getUpiId() != null
+                        && !business.getUpiId().isBlank()
+                        && Boolean.TRUE.equals(
+                        business.getPaymentEnabled()
+                );
 
         boolean googleReviewAvailable =
-                business.getGoogleReviewUrl() != null &&
-                        !business.getGoogleReviewUrl().isBlank() &&
-                        Boolean.TRUE.equals(business.getGoogleReviewEnabled());
+                business.getGoogleReviewUrl() != null
+                        && !business.getGoogleReviewUrl().isBlank()
+                        && Boolean.TRUE.equals(
+                        business.getGoogleReviewEnabled()
+                );
 
         boolean instagramAvailable =
-                business.getInstagramUrl() != null &&
-                        !business.getInstagramUrl().isBlank() &&
-                        Boolean.TRUE.equals(business.getInstagramEnabled());
+                business.getInstagramUrl() != null
+                        && !business.getInstagramUrl().isBlank()
+                        && Boolean.TRUE.equals(
+                        business.getInstagramEnabled()
+                );
 
         boolean facebookAvailable =
-                business.getFacebookUrl() != null &&
-                        !business.getFacebookUrl().isBlank() &&
-                        Boolean.TRUE.equals(business.getFacebookEnabled());
+                business.getFacebookUrl() != null
+                        && !business.getFacebookUrl().isBlank()
+                        && Boolean.TRUE.equals(
+                        business.getFacebookEnabled()
+                );
 
         boolean youtubeAvailable =
-                business.getYoutubeUrl() != null &&
-                        !business.getYoutubeUrl().isBlank() &&
-                        Boolean.TRUE.equals(business.getYoutubeEnabled());
+                business.getYoutubeUrl() != null
+                        && !business.getYoutubeUrl().isBlank()
+                        && Boolean.TRUE.equals(
+                        business.getYoutubeEnabled()
+                );
+
+        /*
+         * Loyalty is business-owner controlled.
+         *
+         * If no LoyaltySettings row exists for this business,
+         * loyalty is considered disabled.
+         */
+        boolean loyaltyAvailable =
+                loyaltySettingsRepository
+                        .findByBusinessId(business.getId())
+                        .map(LoyaltySettings::getEnabled)
+                        .map(Boolean.TRUE::equals)
+                        .orElse(false);
 
         return LandingResponse.builder()
+                .businessId(business.getId())
                 .businessName(business.getBusinessName())
                 .businessType(business.getBusinessType())
                 .city(business.getCity())
                 .logoUrl(business.getLogoUrl())
+
                 .menuAvailable(true)
 
-                // Effective public availability
                 .paymentEnabled(paymentAvailable)
+
+                .loyaltyEnabled(loyaltyAvailable)
 
                 .googleReviewUrl(
                         googleReviewAvailable
                                 ? business.getGoogleReviewUrl()
                                 : null
                 )
-                .googleReviewEnabled(googleReviewAvailable)
+                .googleReviewEnabled(
+                        googleReviewAvailable
+                )
 
                 .instagramUrl(
                         instagramAvailable
                                 ? business.getInstagramUrl()
                                 : null
                 )
-                .instagramEnabled(instagramAvailable)
+                .instagramEnabled(
+                        instagramAvailable
+                )
 
                 .facebookUrl(
                         facebookAvailable
                                 ? business.getFacebookUrl()
                                 : null
                 )
-                .facebookEnabled(facebookAvailable)
+                .facebookEnabled(
+                        facebookAvailable
+                )
 
                 .youtubeUrl(
                         youtubeAvailable
                                 ? business.getYoutubeUrl()
                                 : null
                 )
-                .youtubeEnabled(youtubeAvailable)
+                .youtubeEnabled(
+                        youtubeAvailable
+                )
 
                 .build();
     }
@@ -115,10 +158,14 @@ public class PublicServiceImpl implements PublicService {
 
         boolean paymentAvailable =
                 hasValue(business.getUpiId())
-                        && Boolean.TRUE.equals(business.getPaymentEnabled());
+                        && Boolean.TRUE.equals(
+                        business.getPaymentEnabled()
+                );
 
         if (!paymentAvailable) {
-            throw new BusinessException("UPI payment is not available.");
+            throw new BusinessException(
+                    "UPI payment is not available."
+            );
         }
 
         return PaymentResponse.builder()
@@ -135,9 +182,13 @@ public class PublicServiceImpl implements PublicService {
         subscriptionValidationService.validateBusinessAccess(business);
 
         List<Category> categories =
-                categoryRepository.findByBusinessOrderByDisplayOrderAsc(business);
+                categoryRepository
+                        .findByBusinessOrderByDisplayOrderAsc(
+                                business
+                        );
 
-        List<MenuCategoryResponse> menu = new ArrayList<>();
+        List<MenuCategoryResponse> menu =
+                new ArrayList<>();
 
         for (Category category : categories) {
 
@@ -148,18 +199,31 @@ public class PublicServiceImpl implements PublicService {
                                     category
                             );
 
-            List<MenuItemResponse> items = catalogs.stream()
-                    .map(catalog -> MenuItemResponse.builder()
-                            .name(catalog.getName())
-                            .description(catalog.getDescription())
-                            .price(catalog.getPrice())
-                            .imageUrl(catalog.getImageUrl())
-                            .veg(catalog.getVeg())
-                            .available(catalog.getAvailable())
-                            .bestSeller(catalog.getBestSeller())
-                            .recommended(catalog.getRecommended())
-                            .build())
-                    .toList();
+            List<MenuItemResponse> items =
+                    catalogs.stream()
+                            .map(catalog ->
+                                    MenuItemResponse.builder()
+                                            .name(catalog.getName())
+                                            .description(
+                                                    catalog.getDescription()
+                                            )
+                                            .price(catalog.getPrice())
+                                            .imageUrl(
+                                                    catalog.getImageUrl()
+                                            )
+                                            .veg(catalog.getVeg())
+                                            .available(
+                                                    catalog.getAvailable()
+                                            )
+                                            .bestSeller(
+                                                    catalog.getBestSeller()
+                                            )
+                                            .recommended(
+                                                    catalog.getRecommended()
+                                            )
+                                            .build()
+                            )
+                            .toList();
 
             menu.add(
                     MenuCategoryResponse.builder()
@@ -170,24 +234,38 @@ public class PublicServiceImpl implements PublicService {
         }
 
         List<Catalog> uncategorizedItems =
-                catalogRepository.findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(
-                        business
-                );
+                catalogRepository
+                        .findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(
+                                business
+                        );
 
         if (!uncategorizedItems.isEmpty()) {
 
-            List<MenuItemResponse> items = uncategorizedItems.stream()
-                    .map(catalog -> MenuItemResponse.builder()
-                            .name(catalog.getName())
-                            .description(catalog.getDescription())
-                            .price(catalog.getPrice())
-                            .imageUrl(catalog.getImageUrl())
-                            .veg(catalog.getVeg())
-                            .available(catalog.getAvailable())
-                            .bestSeller(catalog.getBestSeller())
-                            .recommended(catalog.getRecommended())
-                            .build())
-                    .toList();
+            List<MenuItemResponse> items =
+                    uncategorizedItems.stream()
+                            .map(catalog ->
+                                    MenuItemResponse.builder()
+                                            .name(catalog.getName())
+                                            .description(
+                                                    catalog.getDescription()
+                                            )
+                                            .price(catalog.getPrice())
+                                            .imageUrl(
+                                                    catalog.getImageUrl()
+                                            )
+                                            .veg(catalog.getVeg())
+                                            .available(
+                                                    catalog.getAvailable()
+                                            )
+                                            .bestSeller(
+                                                    catalog.getBestSeller()
+                                            )
+                                            .recommended(
+                                                    catalog.getRecommended()
+                                            )
+                                            .build()
+                            )
+                            .toList();
 
             menu.add(
                     MenuCategoryResponse.builder()
@@ -210,17 +288,25 @@ public class PublicServiceImpl implements PublicService {
 
     private Business getBusiness(String qrCode) {
 
-        QrCode qr = qrCodeRepository.findByQrCode(qrCode)
-                .orElseThrow(() ->
-                        new BusinessException("QR Code not found.")
-                );
+        QrCode qr =
+                qrCodeRepository
+                        .findByQrCode(qrCode)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "QR Code not found."
+                                )
+                        );
 
         if (!Boolean.TRUE.equals(qr.getActive())) {
-            throw new BusinessException("QR Code is inactive.");
+            throw new BusinessException(
+                    "QR Code is inactive."
+            );
         }
 
         if (qr.getBusiness() == null) {
-            throw new BusinessException("QR Code is not assigned.");
+            throw new BusinessException(
+                    "QR Code is not assigned."
+            );
         }
 
         return qr.getBusiness();

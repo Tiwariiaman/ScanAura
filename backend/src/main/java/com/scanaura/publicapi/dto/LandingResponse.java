@@ -3,6 +3,8 @@ package com.scanaura.publicapi.dto;
 import com.scanaura.common.enums.BusinessType;
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Builder
@@ -30,4 +32,8 @@ public class LandingResponse {
 
     private String youtubeUrl;
     private Boolean youtubeEnabled;
+
+    private Boolean loyaltyEnabled;
+
+    private UUID businessId;
 }

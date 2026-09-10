@@ -64,4 +64,6 @@ public class BusinessResponse {
 
     private String youtubeUrl;
     private Boolean youtubeEnabled;
+
+    
 }
