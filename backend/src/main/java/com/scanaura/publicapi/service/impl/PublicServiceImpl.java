@@ -108,6 +108,8 @@ public class PublicServiceImpl implements PublicService {
 
                 .paymentEnabled(paymentAvailable)
 
+                .brandColor(business.getBrandColor())
+
                 .loyaltyEnabled(loyaltyAvailable)
 
                 .googleReviewUrl(

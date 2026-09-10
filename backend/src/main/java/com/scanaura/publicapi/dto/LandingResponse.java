@@ -36,4 +36,6 @@ public class LandingResponse {
     private Boolean loyaltyEnabled;
 
     private UUID businessId;
+
+    private String brandColor;
 }

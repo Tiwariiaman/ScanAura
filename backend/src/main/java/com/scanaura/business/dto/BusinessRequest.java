@@ -3,6 +3,7 @@ package com.scanaura.business.dto;
 import com.scanaura.common.enums.BusinessType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -57,4 +58,10 @@ public class BusinessRequest {
 
     private String youtubeUrl;
     private Boolean youtubeEnabled;
+
+    @Pattern(
+            regexp = "^$|^#[0-9A-Fa-f]{6}$",
+            message = "Brand color must be a valid HEX color such as #E63946"
+    )
+    private String brandColor;
 }

@@ -56,6 +56,8 @@ public class BusinessServiceImpl implements BusinessService {
                 request.getPhone()
         );
 
+        business.setBrandColor(normalizeBrandColor(request.getBrandColor()));
+
         business.setLogoUrl(
                 request.getLogoUrl()
         );
@@ -255,6 +257,8 @@ public class BusinessServiceImpl implements BusinessService {
                 request.getPhone()
         );
 
+        business.setBrandColor(normalizeBrandColor(request.getBrandColor()));
+
         business.setWhatsapp(
                 request.getWhatsapp()
         );
@@ -403,6 +407,7 @@ public class BusinessServiceImpl implements BusinessService {
                 .phone(
                         business.getPhone()
                 )
+                .brandColor(business.getBrandColor())
                 .whatsapp(
                         business.getWhatsapp()
                 )
@@ -467,5 +472,23 @@ public class BusinessServiceImpl implements BusinessService {
                         business.getActive()
                 )
                 .build();
+    }
+
+    private String normalizeBrandColor(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String color = value.trim();
+
+        if (color.isEmpty()) {
+            return null;
+        }
+
+        if (!color.startsWith("#")) {
+            color = "#" + color;
+        }
+
+        return color.toUpperCase();
     }
 }

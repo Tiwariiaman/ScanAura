@@ -65,5 +65,5 @@ public class BusinessResponse {
     private String youtubeUrl;
     private Boolean youtubeEnabled;
 
-    
+    private String brandColor;
 }

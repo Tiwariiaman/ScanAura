@@ -85,4 +85,7 @@ public class Business extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean youtubeEnabled = false;
+
+    @Column(name = "brand_color", length = 7)
+    private String brandColor;
 }
