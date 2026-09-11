@@ -42,7 +42,7 @@ import java.util.UUID;
 public class LoyaltyService {
 
     private static final int DAILY_POINTS = 10;
-    private static final int VISIT_QR_VALIDITY_MINUTES = 2;
+    private static final int VISIT_QR_VALIDITY_MINUTES = 5;
 
     private static final String VISIT_QR_TYPE =
             "SCANAURA_LOYALTY_VISIT";
@@ -248,7 +248,7 @@ public class LoyaltyService {
         }
 
         LocalDateTime now =
-                LocalDateTime.now();
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
 
         LocalDateTime expiresAt =
                 now.plusMinutes(

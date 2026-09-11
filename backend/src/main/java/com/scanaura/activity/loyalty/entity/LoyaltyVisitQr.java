@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Entity
@@ -45,9 +46,9 @@ public class LoyaltyVisitQr extends BaseEntity {
 
     public boolean isExpired() {
         return expiresAt == null
-                || LocalDateTime.now().isAfter(expiresAt);
+                || LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+                .isAfter(expiresAt);
     }
-
     public boolean isUsed() {
         return usedAt != null;
     }
