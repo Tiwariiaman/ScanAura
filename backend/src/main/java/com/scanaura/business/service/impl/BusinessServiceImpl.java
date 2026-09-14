@@ -1,6 +1,7 @@
 package com.scanaura.business.service.impl;
 
 import com.scanaura.auth.entity.User;
+import com.scanaura.business.dto.BusinessDashboardResponse;
 import com.scanaura.business.dto.BusinessRequest;
 import com.scanaura.business.dto.BusinessResponse;
 import com.scanaura.business.entity.Business;
@@ -9,12 +10,16 @@ import com.scanaura.business.service.BusinessService;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
 import com.scanaura.image.service.ImageService;
+import com.scanaura.qr.repository.QrScanDailyRepository;
 import com.scanaura.qr.service.QrService;
+import com.scanaura.subscription.entity.Subscription;
+import com.scanaura.subscription.repository.SubscriptionRepository;
 import com.scanaura.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -25,6 +30,9 @@ public class BusinessServiceImpl implements BusinessService {
     private final QrService qrService;
     private final SubscriptionService subscriptionService;
     private final ImageService imageService;
+
+    private final SubscriptionRepository subscriptionRepository;
+    private final QrScanDailyRepository qrScanDailyRepository;
 
     @Override
     @Transactional
@@ -490,5 +498,120 @@ public class BusinessServiceImpl implements BusinessService {
         }
 
         return color.toUpperCase();
+    }
+
+    @Override
+    public BusinessDashboardResponse getMyDashboard() {
+
+        User currentUser =
+                SecurityUtil.getCurrentUser();
+
+        Business business =
+                businessRepository.findByOwner(currentUser)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Business not found."
+                                ));
+
+        Subscription subscription =
+                subscriptionRepository
+                        .findByBusiness(business)
+                        .orElse(null);
+
+        LocalDate today = LocalDate.now();
+
+        LocalDate yesterday =
+                today.minusDays(1);
+
+        LocalDate last7DaysStart =
+                today.minusDays(6);
+
+        long todayScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDate(
+                                business,
+                                today
+                        );
+
+        long yesterdayScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDate(
+                                business,
+                                yesterday
+                        );
+
+        long last7DaysScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusinessAndDateRange(
+                                business,
+                                last7DaysStart,
+                                today
+                        );
+
+        long totalScans =
+                qrScanDailyRepository
+                        .getTotalScansByBusiness(
+                                business
+                        );
+
+        return BusinessDashboardResponse.builder()
+
+                .businessId(
+                        business.getId()
+                )
+
+                .businessName(
+                        business.getBusinessName()
+                )
+
+                .ownerName(
+                        business.getOwner().getFullName()
+                )
+
+                .email(
+                        business.getEmail()
+                )
+
+                .phone(
+                        business.getPhone()
+                )
+
+                .city(
+                        business.getCity()
+                )
+
+                .active(
+                        business.getActive()
+                )
+
+                .subscriptionStatus(
+                        subscription != null
+                                ? subscription.getStatus()
+                                : null
+                )
+
+                .currentPlan(
+                        subscription != null
+                                ? subscription.getPlan().getName()
+                                : null
+                )
+
+                .todayScans(
+                        todayScans
+                )
+
+                .yesterdayScans(
+                        yesterdayScans
+                )
+
+                .last7DaysScans(
+                        last7DaysScans
+                )
+
+                .totalScans(
+                        totalScans
+                )
+
+                .build();
     }
 }

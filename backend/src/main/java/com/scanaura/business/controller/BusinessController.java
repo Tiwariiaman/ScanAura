@@ -1,5 +1,6 @@
 package com.scanaura.business.controller;
 
+import com.scanaura.business.dto.BusinessDashboardResponse;
 import com.scanaura.business.dto.BusinessRequest;
 import com.scanaura.business.dto.BusinessResponse;
 import com.scanaura.business.service.BusinessService;
@@ -72,6 +73,21 @@ public class BusinessController {
                         true,
                         "Business deleted successfully.",
                         "Deleted"
+                )
+        );
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<BusinessDashboardResponse>> getMyDashboard() {
+
+        BusinessDashboardResponse response =
+                businessService.getMyDashboard();
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Business dashboard fetched successfully.",
+                        response
                 )
         );
     }
