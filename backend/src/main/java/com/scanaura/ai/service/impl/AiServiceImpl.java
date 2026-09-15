@@ -10,6 +10,7 @@ import com.scanaura.catalog.entity.Catalog;
 import com.scanaura.catalog.repository.CatalogRepository;
 import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
+import com.scanaura.common.enums.BusinessType;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
 import com.scanaura.subscription.entity.Subscription;
@@ -57,8 +58,23 @@ public class AiServiceImpl implements AiService {
             );
         }
 
-        return aiClient.analyzeMenu(file);
+        Business business = businessRepository
+                .findByOwner(SecurityUtil.getCurrentUser())
+                .orElseThrow(() ->
+                        new BusinessException("Business not found."));
 
+        BusinessType businessType = business.getBusinessType();
+
+        if (businessType == null) {
+            throw new BusinessException(
+                    "Business type is not configured."
+            );
+        }
+
+        return aiClient.analyzeMenu(
+                file,
+                businessType.name()
+        );
     }
 
     @Override
@@ -142,7 +158,12 @@ public class AiServiceImpl implements AiService {
 
                 catalog.setPrice(item.getPrice());
 
-                catalog.setVeg(item.getVeg());
+                if (business.getBusinessType() == BusinessType.FOOD) {
+                    catalog.setVeg(item.getVeg());
+                } else {
+                    catalog.setVeg(null);
+                }
+
 
                 catalog.setAvailable(true);
 

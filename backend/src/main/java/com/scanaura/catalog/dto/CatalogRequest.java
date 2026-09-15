@@ -32,7 +32,7 @@ public class CatalogRequest {
 
     private String imagePublicId;
 
-    private Boolean veg = true;
+    private Boolean veg;
 
     private Boolean available = true;
 

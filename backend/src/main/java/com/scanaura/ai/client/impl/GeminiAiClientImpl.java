@@ -30,7 +30,10 @@ public class GeminiAiClientImpl implements AiClient {
     private String apiKey;
 
     @Override
-    public AiMenuResponse analyzeMenu(MultipartFile file) {
+    public AiMenuResponse analyzeMenu(
+            MultipartFile file,
+            String businessType
+    ) {
 
         try {
 
@@ -39,7 +42,8 @@ public class GeminiAiClientImpl implements AiClient {
 
             Map<String, Object> request = createRequest(
                     base64,
-                    file.getContentType()
+                    file.getContentType(),
+                    businessType
             );
 
             String response = geminiRestClient
@@ -63,19 +67,19 @@ public class GeminiAiClientImpl implements AiClient {
 
         }catch (Exception e) {
 
-            e.printStackTrace();   // Temporary for debugging
+            e.printStackTrace();
 
             throw new BusinessException(
-                    e.getMessage()
+                    "Unable to analyze the uploaded file. Please try again."
             );
-
         }
 
     }
 
     private Map<String, Object> createRequest(
             String base64,
-            String mimeType
+            String mimeType,
+            String businessType
     ) {
 
         return Map.of(
@@ -92,7 +96,7 @@ public class GeminiAiClientImpl implements AiClient {
 
                                         Map.of(
                                                 "text",
-                                                AiConstants.MENU_ANALYSIS_PROMPT
+                                                AiConstants.buildMenuAnalysisPrompt(businessType)
                                         ),
 
                                         Map.of(

@@ -10,6 +10,7 @@ import com.scanaura.catalog.repository.CatalogRepository;
 import com.scanaura.catalog.service.CatalogService;
 import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
+import com.scanaura.common.enums.BusinessType;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
 import com.scanaura.image.service.ImageService;
@@ -59,7 +60,12 @@ public class CatalogServiceImpl implements CatalogService {
         catalog.setImageUrl(request.getImageUrl());
         catalog.setImagePublicId(request.getImagePublicId());
 
-        catalog.setVeg(request.getVeg());
+        if (business.getBusinessType() == BusinessType.FOOD) {
+            catalog.setVeg(request.getVeg());
+        } else {
+            catalog.setVeg(null);
+        }
+
         catalog.setAvailable(request.getAvailable());
         catalog.setBestSeller(request.getBestSeller());
         catalog.setRecommended(request.getRecommended());
@@ -165,7 +171,12 @@ public class CatalogServiceImpl implements CatalogService {
         catalog.setDescription(request.getDescription());
         catalog.setPrice(request.getPrice());
 
-        catalog.setVeg(request.getVeg());
+        if (business.getBusinessType() == BusinessType.FOOD) {
+            catalog.setVeg(request.getVeg());
+        } else {
+            catalog.setVeg(null);
+        }
+
         catalog.setAvailable(request.getAvailable());
         catalog.setBestSeller(request.getBestSeller());
         catalog.setRecommended(request.getRecommended());

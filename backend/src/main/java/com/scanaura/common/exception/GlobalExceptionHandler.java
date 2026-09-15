@@ -1,8 +1,10 @@
 package com.scanaura.common.exception;
 
 import com.scanaura.common.response.ApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -104,6 +106,67 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 response,
                 status
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+
+        // Log the real database error on the server.
+        ex.printStackTrace();
+
+        ApiResponse<Object> response =
+                new ApiResponse<>(
+                        false,
+                        "Menu import failed because the data could not be saved. Please check the imported menu data.",
+                        null
+                );
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ApiResponse<Object>> handleTransactionException(
+            TransactionSystemException ex) {
+
+        ex.printStackTrace();
+
+        ApiResponse<Object> response =
+                new ApiResponse<>(
+                        false,
+                        "Menu import could not be completed because the database transaction failed.",
+                        null
+                );
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleGenericException(
+            Exception ex) {
+
+        // IMPORTANT:
+        // Keep the actual exception in backend logs,
+        // but don't expose internal database/server details to customers.
+        ex.printStackTrace();
+
+        ApiResponse<Object> response =
+                new ApiResponse<>(
+                        false,
+                        "Unable to complete this request. Please try again.",
+                        null
+                );
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
 }

@@ -37,8 +37,8 @@ public class Catalog extends BaseEntity {
     @Column(length = 500)
     private String imagePublicId;
 
-    @Column(nullable = false)
-    private Boolean veg = true;
+    @Column
+    private Boolean veg;
 
     @Column(nullable = false)
     private Boolean available = true;
