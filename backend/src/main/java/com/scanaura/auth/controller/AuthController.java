@@ -156,4 +156,21 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<RefreshTokenResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+
+        RefreshTokenResponse response =
+                authService.refreshToken(request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Token refreshed successfully.",
+                        response
+                )
+        );
+    }
+
 }

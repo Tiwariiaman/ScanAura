@@ -31,4 +31,8 @@ public interface AuthService {
     void resetPassword(
             ResetPasswordRequest request
     );
+
+    RefreshTokenResponse refreshToken(
+            RefreshTokenRequest request
+    );
 }

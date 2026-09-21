@@ -3,9 +3,11 @@ package com.scanaura.auth.service.impl;
 import com.scanaura.auth.dto.*;
 import com.scanaura.auth.entity.EmailVerificationToken;
 import com.scanaura.auth.entity.PasswordResetToken;
+import com.scanaura.auth.entity.RefreshToken;
 import com.scanaura.auth.entity.User;
 import com.scanaura.auth.repository.EmailVerificationTokenRepository;
 import com.scanaura.auth.repository.PasswordResetTokenRepository;
+import com.scanaura.auth.repository.RefreshTokenRepository;
 import com.scanaura.auth.service.EmailService;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.auth.repository.UserRepository;
@@ -43,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Value("${scanaura.frontend-url}")
     private String frontendUrl;
+
+    private final RefreshTokenRepository refreshTokenRepository;
 
 
     // Register
@@ -198,14 +202,18 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        String token =
+        String accessToken =
                 jwtService.generateToken(
                         user.getEmail(),
                         user.getRole().name()
                 );
 
+        String refreshToken =
+                createRefreshToken(user);
+
         return new LoginResponse(
-                token,
+                accessToken,
+                refreshToken,
                 "Bearer",
                 86400000L
         );
@@ -567,6 +575,115 @@ public class AuthServiceImpl implements AuthService {
 
         passwordResetTokenRepository.save(
                 resetToken
+        );
+    }
+
+    private String createRefreshToken(User user) {
+
+        // Remove previous refresh tokens for this user.
+        refreshTokenRepository.deleteByUser(user);
+
+        String token =
+                UUID.randomUUID().toString()
+                        + UUID.randomUUID().toString();
+
+        RefreshToken refreshToken =
+                new RefreshToken();
+
+        refreshToken.setUser(user);
+        refreshToken.setToken(token);
+
+        // 30 days
+        refreshToken.setExpiresAt(
+                LocalDateTime.now()
+                        .plusDays(30)
+        );
+
+        refreshToken.setRevoked(false);
+
+        refreshTokenRepository.save(refreshToken);
+
+        return token;
+    }
+
+    @Override
+    @Transactional
+    public RefreshTokenResponse refreshToken(
+            RefreshTokenRequest request
+    ) {
+
+        RefreshToken existingToken =
+                refreshTokenRepository
+                        .findByToken(
+                                request.getRefreshToken()
+                        )
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Invalid refresh token."
+                                )
+                        );
+
+        // Check if manually revoked.
+        if (existingToken.isRevoked()) {
+            throw new BusinessException(
+                    "Refresh token has been revoked."
+            );
+        }
+
+        // Check expiration.
+        if (existingToken.getExpiresAt()
+                .isBefore(LocalDateTime.now())) {
+
+            refreshTokenRepository.delete(existingToken);
+
+            throw new BusinessException(
+                    "Refresh token has expired. Please login again."
+            );
+        }
+
+        User user =
+                existingToken.getUser();
+
+        // User account checks.
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new BusinessException(
+                    "Your account is inactive."
+            );
+        }
+
+        if (Boolean.TRUE.equals(user.getDeleted())) {
+            throw new BusinessException(
+                    "Your account is unavailable."
+            );
+        }
+
+        // Generate new access token.
+        String accessToken =
+                jwtService.generateToken(
+                        user.getEmail(),
+                        user.getRole().name()
+                );
+
+        String newRefreshToken =
+                UUID.randomUUID().toString()
+                        + UUID.randomUUID().toString();
+
+        existingToken.setToken(newRefreshToken);
+
+        existingToken.setExpiresAt(
+                LocalDateTime.now()
+                        .plusDays(30)
+        );
+
+        existingToken.setRevoked(false);
+
+        refreshTokenRepository.save(existingToken);
+
+        return new RefreshTokenResponse(
+                accessToken,
+                newRefreshToken,
+                "Bearer",
+                86400000L
         );
     }
 
