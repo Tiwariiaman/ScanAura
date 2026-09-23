@@ -34,6 +34,20 @@ public class Business extends BaseEntity {
 
     private String whatsapp;
 
+    private String googleMapsUrl;
+
+    @Column(nullable = false)
+    private boolean callEnabled = false;
+
+    @Column(nullable = false)
+    private boolean whatsappEnabled = false;
+
+    @Column(nullable = false)
+    private boolean mapsEnabled = false;
+
+    @Column(nullable = false)
+    private boolean galleryEnabled = false;
+
     private String email;
 
     private String address;

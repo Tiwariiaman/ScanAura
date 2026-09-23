@@ -148,8 +148,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // Login
-    // Login
     @Override
+    @Transactional
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository
@@ -164,7 +164,6 @@ public class AuthServiceImpl implements AuthService {
                         )
                 );
 
-        // Check password first.
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
@@ -174,8 +173,6 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // Email verification is required
-        // before the user can access the application.
         if (!Boolean.TRUE.equals(
                 user.getVerified()
         )) {
@@ -184,7 +181,6 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // Account must be active.
         if (!Boolean.TRUE.equals(
                 user.getActive()
         )) {
@@ -193,7 +189,6 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // Account must not be deleted.
         if (Boolean.TRUE.equals(
                 user.getDeleted()
         )) {

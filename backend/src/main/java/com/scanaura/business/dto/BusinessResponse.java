@@ -66,4 +66,10 @@ public class BusinessResponse {
     private Boolean youtubeEnabled;
 
     private String brandColor;
+
+    private String googleMapsUrl;
+    private boolean callEnabled;
+    private boolean whatsappEnabled;
+    private boolean mapsEnabled;
+    private boolean galleryEnabled;
 }

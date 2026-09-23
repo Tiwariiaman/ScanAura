@@ -31,7 +31,10 @@ public class CloudinaryImageService implements ImageService {
     );
 
     @Override
-    public ImageUploadResponse upload(MultipartFile file, ImageType type) {
+    public ImageUploadResponse upload(
+            MultipartFile file,
+            ImageType type
+    ) {
 
         validate(file);
 
@@ -101,6 +104,8 @@ public class CloudinaryImageService implements ImageService {
             case BUSINESS -> ImageFolder.BUSINESS;
 
             case CATALOG -> ImageFolder.CATALOG;
+
+            case GALLERY -> ImageFolder.GALLERY;
 
             case PAYMENT_SCREENSHOT ->
                     ImageFolder.PAYMENT_SCREENSHOT;

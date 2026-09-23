@@ -64,4 +64,11 @@ public class BusinessRequest {
             message = "Brand color must be a valid HEX color such as #E63946"
     )
     private String brandColor;
+
+    private String googleMapsUrl;
+
+    private Boolean callEnabled;
+    private Boolean whatsappEnabled;
+    private Boolean mapsEnabled;
+    private Boolean galleryEnabled;
 }

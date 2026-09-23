@@ -8,6 +8,8 @@ import com.scanaura.catalog.repository.CatalogRepository;
 import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
 import com.scanaura.common.exception.BusinessException;
+import com.scanaura.gallery.dto.GalleryImageResponse;
+import com.scanaura.gallery.repository.GalleryImageRepository;
 import com.scanaura.publicapi.dto.LandingResponse;
 import com.scanaura.publicapi.dto.MenuCategoryResponse;
 import com.scanaura.publicapi.dto.MenuItemResponse;
@@ -33,6 +35,8 @@ public class PublicServiceImpl implements PublicService {
     private final CatalogRepository catalogRepository;
     private final SubscriptionValidationService subscriptionValidationService;
     private final QrScanService qrScanService;
+
+    private final GalleryImageRepository galleryImageRepository;
 
     /*
      * Loyalty settings are controlled separately from Business.
@@ -84,6 +88,38 @@ public class PublicServiceImpl implements PublicService {
                         business.getYoutubeEnabled()
                 );
 
+        boolean callAvailable =
+                hasValue(business.getPhone())
+                        && business.isCallEnabled();
+
+        boolean whatsappAvailable =
+                hasValue(business.getWhatsapp())
+                        && business.isWhatsappEnabled();
+
+        boolean mapsAvailable =
+                hasValue(business.getGoogleMapsUrl())
+                        && business.isMapsEnabled();
+
+
+        boolean galleryAvailable = business.isGalleryEnabled();
+
+        List<GalleryImageResponse> galleryImages =
+                galleryAvailable
+                        ? galleryImageRepository
+                        .findAllByBusinessIdOrderByDisplayOrderAscIdAsc(
+                                business.getId()
+                        )
+                        .stream()
+                        .map(image ->
+                                GalleryImageResponse.builder()
+                                        .id(image.getId())
+                                        .imageUrl(image.getImageUrl())
+                                        .displayOrder(image.getDisplayOrder())
+                                        .build()
+                        )
+                        .toList()
+                        : List.of();
+
         /*
          * Loyalty is business-owner controlled.
          *
@@ -103,6 +139,44 @@ public class PublicServiceImpl implements PublicService {
                 .businessType(business.getBusinessType())
                 .city(business.getCity())
                 .logoUrl(business.getLogoUrl())
+
+                // Contact
+                .phone(
+                        callAvailable
+                                ? business.getPhone()
+                                : null
+                )
+                .callEnabled(
+                        callAvailable
+                )
+
+                .whatsapp(
+                        whatsappAvailable
+                                ? business.getWhatsapp()
+                                : null
+                )
+                .whatsappEnabled(
+                        whatsappAvailable
+                )
+
+                // Location
+                .address(business.getAddress())
+                .state(business.getState())
+                .country(business.getCountry())
+                .pincode(business.getPincode())
+
+                .googleMapsUrl(
+                        mapsAvailable
+                                ? business.getGoogleMapsUrl()
+                                : null
+                )
+                .mapsEnabled(
+                        mapsAvailable
+                )
+
+                // Gallery
+                .galleryEnabled(galleryAvailable)
+                .galleryImages(galleryImages)
 
                 .menuAvailable(true)
 

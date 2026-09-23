@@ -4,6 +4,8 @@ public enum BusinessType {
 
     FOOD,
 
+    HOTEL,
+
     RETAIL,
 
     ECOMMERCE,

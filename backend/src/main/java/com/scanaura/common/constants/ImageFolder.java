@@ -9,6 +9,8 @@ public final class ImageFolder {
 
     public static final String CATALOG = "scanaura/catalog";
 
+    public static final String GALLERY = "scanaura/gallery";
+
     public static final String PROFILE = "scanaura/profile";
 
     public static final String PAYMENT_SCREENSHOT =
