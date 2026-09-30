@@ -28,62 +28,92 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        final String authHeader =
+                request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // No access token.
+        // Let Spring Security handle the request.
+        if (authHeader == null ||
+                !authHeader.startsWith("Bearer ")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String token = authHeader.substring(7);
+        final String token =
+                authHeader.substring(7).trim();
 
         try {
 
-            final String email =
+            final String identifier =
                     jwtService.extractUsername(token);
 
-            if (email != null &&
-                    SecurityContextHolder
-                            .getContext()
-                            .getAuthentication() == null) {
+            if (identifier == null ||
+                    identifier.trim().isEmpty()) {
 
-                UserDetails userDetails =
-                        userDetailsService
-                                .loadUserByUsername(email);
+                response.setStatus(
+                        HttpServletResponse.SC_UNAUTHORIZED
+                );
 
-                if (jwtService.isTokenValid(
-                        token,
-                        userDetails
-                )) {
+                return;
+            }
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+            if (SecurityContextHolder
+                    .getContext()
+                    .getAuthentication() != null) {
 
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            UserDetails userDetails =
+                    userDetailsService
+                            .loadUserByUsername(identifier);
+
+            // Token is expired or otherwise invalid.
+            if (!jwtService.isTokenValid(
+                    token,
+                    userDetails
+            )) {
+
+                SecurityContextHolder
+                        .clearContext();
+
+                response.setStatus(
+                        HttpServletResponse.SC_UNAUTHORIZED
+                );
+
+                return;
+            }
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
                     );
 
-                    SecurityContextHolder
-                            .getContext()
-                            .setAuthentication(
-                                    authentication
-                            );
-                }
-            }
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource()
+                            .buildDetails(request)
+            );
+
+            SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(
+                            authentication
+                    );
+
+            filterChain.doFilter(request, response);
 
         } catch (Exception e) {
 
-            // Invalid or expired access token.
-            // Do not crash the request.
             SecurityContextHolder
                     .clearContext();
-        }
 
-        filterChain.doFilter(request, response);
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
+        }
     }
 }

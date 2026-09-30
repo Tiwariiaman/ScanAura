@@ -13,12 +13,32 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
+    public UserDetails loadUserByUsername(String identifier)
             throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found"));
+        User user;
+
+        if (identifier != null &&
+                identifier.contains("@")) {
+
+            user = userRepository.findByEmail(
+                    identifier.trim().toLowerCase()
+            ).orElseThrow(() ->
+                    new UsernameNotFoundException(
+                            "User not found"
+                    )
+            );
+
+        } else {
+
+            user = userRepository.findByMobile(
+                    identifier.trim()
+            ).orElseThrow(() ->
+                    new UsernameNotFoundException(
+                            "User not found"
+                    )
+            );
+        }
 
         return new CustomUserDetails(user);
     }
