@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <!-- Business Title -->
+    <title th:text="${businessName}">
+        Business Name
+    </title>
+
+    <!-- Open Graph -->
+    <meta property="og:title"
+          th:content="${businessName}">
+
+    <meta property="og:description"
+          th:content="${description}">
+
+    <meta property="og:type"
+          content="website">
+
+    <meta property="og:url"
+          th:content="${canonicalUrl}">
+
+    <meta property="og:site_name"
+          content="ScanAura">
+
+    <!-- Business Logo -->
+    <meta th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+          property="og:image"
+          th:content="${logoUrl}">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card"
+          content="summary_large_image">
+
+    <meta name="twitter:title"
+          th:content="${businessName}">
+
+    <meta name="twitter:description"
+          th:content="${description}">
+
+    <meta th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+          name="twitter:image"
+          th:content="${logoUrl}">
+
+    <!-- Canonical -->
+    <link rel="canonical"
+          th:href="${canonicalUrl}">
+
+</head>
+
+<body>
+
+<div style="
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:Arial,Helvetica,sans-serif;
+    text-align:center;
+    padding:24px;
+    box-sizing:border-box;
+">
+
+    <div>
+
+        <img th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+             th:src="${logoUrl}"
+             th:alt="${businessName}"
+             style="
+                max-width:120px;
+                max-height:120px;
+                object-fit:contain;
+                border-radius:16px;
+                margin-bottom:20px;
+             ">
+
+        <h1 th:text="${businessName}"
+            style="margin:0 0 12px;">
+            Business Name
+        </h1>
+
+        <p th:text="${description}"
+           style="
+                margin:0 0 20px;
+                color:#66727b;
+           ">
+            Explore our Digital Presence
+        </p>
+
+        <p style="
+            margin:0;
+            color:#9aa3a9;
+            font-size:13px;
+        ">
+            Powered by ScanAura
+        </p>
+
+    </div>
+
+</div>
+
+</body>
+</html>

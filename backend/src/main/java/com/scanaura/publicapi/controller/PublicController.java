@@ -4,6 +4,7 @@ import com.scanaura.common.response.ApiResponse;
 import com.scanaura.publicapi.dto.LandingResponse;
 import com.scanaura.publicapi.dto.MenuResponse;
 import com.scanaura.publicapi.dto.PaymentResponse;
+import com.scanaura.publicapi.dto.SharePreviewResponse;
 import com.scanaura.publicapi.service.PublicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 @RequestMapping("/api/public")
@@ -56,5 +58,38 @@ public class PublicController {
                         publicService.getPaymentDetails(qrCode)
                 )
         );
+    }
+
+    @GetMapping("/share/{qrCode}")
+    public ModelAndView sharePreview(
+            @PathVariable String qrCode) {
+
+        SharePreviewResponse preview =
+                publicService.getSharePreview(qrCode);
+
+        ModelAndView modelAndView =
+                new ModelAndView("public/share-preview");
+
+        modelAndView.addObject(
+                "businessName",
+                preview.getBusinessName()
+        );
+
+        modelAndView.addObject(
+                "logoUrl",
+                preview.getLogoUrl()
+        );
+
+        modelAndView.addObject(
+                "description",
+                preview.getDescription()
+        );
+
+        modelAndView.addObject(
+                "canonicalUrl",
+                "https://scanaura.in/q/" + qrCode
+        );
+
+        return modelAndView;
     }
 }

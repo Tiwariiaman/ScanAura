@@ -10,11 +10,7 @@ import com.scanaura.category.repository.CategoryRepository;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.gallery.dto.GalleryImageResponse;
 import com.scanaura.gallery.repository.GalleryImageRepository;
-import com.scanaura.publicapi.dto.LandingResponse;
-import com.scanaura.publicapi.dto.MenuCategoryResponse;
-import com.scanaura.publicapi.dto.MenuItemResponse;
-import com.scanaura.publicapi.dto.MenuResponse;
-import com.scanaura.publicapi.dto.PaymentResponse;
+import com.scanaura.publicapi.dto.*;
 import com.scanaura.publicapi.service.PublicService;
 import com.scanaura.qr.entity.QrCode;
 import com.scanaura.qr.repository.QrCodeRepository;
@@ -49,6 +45,9 @@ public class PublicServiceImpl implements PublicService {
     public LandingResponse getLandingPage(String qrCode) {
 
         Business business = getBusiness(qrCode);
+
+
+        subscriptionValidationService.validateBusinessAccess(business);
 
         // Record one scan for the validated public QR landing visit.
         qrScanService.recordScan(qrCode);
@@ -247,6 +246,18 @@ public class PublicServiceImpl implements PublicService {
         return PaymentResponse.builder()
                 .businessName(business.getBusinessName())
                 .upiId(business.getUpiId())
+                .build();
+    }
+
+    @Override
+    public SharePreviewResponse getSharePreview(String qrCode) {
+
+        Business business = getBusiness(qrCode);
+
+        return SharePreviewResponse.builder()
+                .businessName(business.getBusinessName())
+                .logoUrl(business.getLogoUrl())
+                .description("Explore our Digital Presence")
                 .build();
     }
 
