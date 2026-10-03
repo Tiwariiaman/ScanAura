@@ -51,6 +51,10 @@
     <link rel="canonical"
           th:href="${canonicalUrl}">
 
+    <!-- Redirect normal users to the actual business page -->
+    <meta http-equiv="refresh"
+          th:content="|0;url=${canonicalUrl}|">
+
 </head>
 
 <body>
