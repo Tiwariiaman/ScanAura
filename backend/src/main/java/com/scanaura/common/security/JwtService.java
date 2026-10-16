@@ -84,4 +84,27 @@ public class JwtService {
                 .equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
+
+    @Value("${jwt.support-session-expiration:1800000}")
+    private Long supportSessionExpiration;
+
+    public String generateSupportToken(
+            String targetIdentifier,
+            String targetRole,
+            String adminIdentifier
+    ) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .subject(targetIdentifier)
+                .claim("role", targetRole)
+                .claim("supportSession", true)
+                .claim("adminSubject", adminIdentifier)
+                .issuedAt(new Date(now))
+                .expiration(
+                        new Date(now + supportSessionExpiration)
+                )
+                .signWith(getSigningKey())
+                .compact();
+    }
 }

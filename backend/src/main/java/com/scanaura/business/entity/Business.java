@@ -102,4 +102,7 @@ public class Business extends BaseEntity {
 
     @Column(name = "brand_color", length = 7)
     private String brandColor;
+
+    @Column(name = "public_slug", length = 100, unique = true)
+    private String publicSlug;
 }

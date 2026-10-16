@@ -81,9 +81,13 @@ public class GlobalExceptionHandler {
                         null
                 );
 
+
         HttpStatus status = HttpStatus.BAD_REQUEST;
 
-        if ("Business not found.".equalsIgnoreCase(message)) {
+        if ("EMAIL_NOT_VERIFIED".equals(message)) {
+            status = HttpStatus.FORBIDDEN;
+
+        } else if ("Business not found.".equalsIgnoreCase(message)) {
 
             status = HttpStatus.NOT_FOUND;
 
@@ -100,8 +104,8 @@ public class GlobalExceptionHandler {
                 .equalsIgnoreCase(message)) {
 
             status = HttpStatus.FORBIDDEN;
-
         }
+
 
         return new ResponseEntity<>(
                 response,

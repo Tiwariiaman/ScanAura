@@ -1,9 +1,6 @@
 package com.scanaura.admin.service;
 
-import com.scanaura.admin.dto.AdminQrDetailsResponse;
-import com.scanaura.admin.dto.BusinessSummaryResponse;
-import com.scanaura.admin.dto.DashboardResponse;
-import com.scanaura.admin.dto.QrInventoryResponse;
+import com.scanaura.admin.dto.*;
 import com.scanaura.qr.dto.QrResponse;
 
 import java.util.List;
@@ -28,4 +25,11 @@ public interface AdminService {
     void deactivateQr(String qrCode);
 
     AdminQrDetailsResponse getQrDetails(String qrCode);
+
+    AdminImpersonationResponse loginAsBusiness(
+            UUID businessId,
+            String adminIdentifier
+    );
+
+
 }

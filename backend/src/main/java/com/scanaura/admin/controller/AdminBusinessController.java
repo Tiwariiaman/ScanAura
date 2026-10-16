@@ -1,5 +1,6 @@
 package com.scanaura.admin.controller;
 
+import com.scanaura.admin.dto.AdminImpersonationResponse;
 import com.scanaura.admin.dto.BusinessSummaryResponse;
 import com.scanaura.admin.service.AdminService;
 import com.scanaura.common.enums.BillingCycle;
@@ -9,6 +10,8 @@ import com.scanaura.subscription.service.SubscriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -97,6 +100,27 @@ public class AdminBusinessController {
                         true,
                         "Subscription granted successfully.",
                         "SUCCESS"
+                )
+        );
+    }
+
+    @PostMapping("/{businessId}/login-as")
+    public ResponseEntity<ApiResponse<AdminImpersonationResponse>>
+    loginAsBusiness(
+            @PathVariable UUID businessId,
+            @AuthenticationPrincipal UserDetails admin
+    ) {
+        AdminImpersonationResponse result =
+                adminService.loginAsBusiness(
+                        businessId,
+                        admin.getUsername()
+                );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Business support login created successfully.",
+                        result
                 )
         );
     }

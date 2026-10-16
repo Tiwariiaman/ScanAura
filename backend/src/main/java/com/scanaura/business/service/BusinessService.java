@@ -16,4 +16,6 @@ public interface BusinessService {
 
     void deleteBusiness();
 
+    boolean isPublicSlugAvailable(String slug);
+
 }

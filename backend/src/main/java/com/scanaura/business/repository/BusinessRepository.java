@@ -24,4 +24,9 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
 
     List<Business> findByBusinessNameContainingIgnoreCase(String businessName);
 
+    boolean existsByPublicSlugIgnoreCase(String publicSlug);
+
+    Optional<Business> findByPublicSlugIgnoreCase(String publicSlug);
+
+
 }

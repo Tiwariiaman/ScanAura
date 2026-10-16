@@ -72,4 +72,6 @@ public class BusinessResponse {
     private boolean whatsappEnabled;
     private boolean mapsEnabled;
     private boolean galleryEnabled;
+
+    private String publicSlug;
 }

@@ -71,4 +71,10 @@ public class BusinessRequest {
     private Boolean whatsappEnabled;
     private Boolean mapsEnabled;
     private Boolean galleryEnabled;
+
+    @Pattern(
+            regexp = "^$|^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            message = "Public slug can contain only lowercase letters, numbers and single hyphens"
+    )
+    private String publicSlug;
 }

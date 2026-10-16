@@ -581,6 +581,12 @@ public class AuthServiceImpl implements AuthService {
             return;
         }
 
+        if (!Boolean.TRUE.equals(user.getVerified())) {
+            throw new BusinessException(
+                    "EMAIL_NOT_VERIFIED"
+            );
+        }
+
         /*
          * Remove previous reset token.
          */

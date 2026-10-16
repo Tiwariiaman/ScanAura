@@ -133,6 +133,19 @@
             business.setQrSlug(
                     UUID.randomUUID().toString()
             );
+            String publicSlug = normalizePublicSlug(
+                    request.getPublicSlug()
+            );
+
+            if (publicSlug != null) {
+                if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
+                    throw new BusinessException(
+                            "This business link is already taken."
+                    );
+                }
+
+                business.setPublicSlug(publicSlug);
+            }
 
             business.setInstagramUrl(request.getInstagramUrl());
             business.setInstagramEnabled(
@@ -287,6 +300,7 @@
 
             business.setBrandColor(normalizeBrandColor(request.getBrandColor()));
 
+
             business.setWhatsapp(
                     request.getWhatsapp()
             );
@@ -330,6 +344,23 @@
             business.setGoogleReviewUrl(
                     request.getGoogleReviewUrl()
             );
+
+            if (business.getPublicSlug() == null
+                    && request.getPublicSlug() != null
+                    && !request.getPublicSlug().trim().isEmpty()) {
+
+                String publicSlug = normalizePublicSlug(
+                        request.getPublicSlug()
+                );
+
+                if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
+                    throw new BusinessException(
+                            "This business link is already taken."
+                    );
+                }
+
+                business.setPublicSlug(publicSlug);
+            }
 
             /*
              * Only update feature toggles when the request
@@ -517,6 +548,9 @@
                     .qrSlug(
                             business.getQrSlug()
                     )
+                    .publicSlug(
+                            business.getPublicSlug()
+                    )
                     .instagramUrl(
                             business.getInstagramUrl()
                     )
@@ -541,6 +575,8 @@
                     .build();
         }
 
+
+
         private String normalizeBrandColor(String value) {
             if (value == null) {
                 return null;
@@ -557,6 +593,21 @@
             }
 
             return color.toUpperCase();
+        }
+
+        private String normalizePublicSlug(String value) {
+
+            if (value == null) {
+                return null;
+            }
+
+            String slug = value.trim().toLowerCase();
+
+            if (slug.isEmpty()) {
+                return null;
+            }
+
+            return slug;
         }
 
         @Override
@@ -673,4 +724,31 @@
 
                     .build();
         }
+
+
+        @Override
+        @Transactional(readOnly = true)
+        public boolean isPublicSlugAvailable(String slug) {
+            if (slug == null) {
+                return false;
+            }
+
+            String normalized = slug.trim().toLowerCase(
+                    java.util.Locale.ROOT
+            );
+
+            if (!normalized.matches(
+                    "^[a-z0-9]+(?:-[a-z0-9]+)*$")) {
+                return false;
+            }
+
+            User currentUser = SecurityUtil.getCurrentUser();
+
+            return businessRepository.findByPublicSlugIgnoreCase(normalized)
+                    .map(existing ->
+                            existing.getOwner().getId()
+                                    .equals(currentUser.getId()))
+                    .orElse(true);
+        }
+
     }
