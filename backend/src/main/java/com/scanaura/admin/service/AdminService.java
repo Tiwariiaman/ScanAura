@@ -31,5 +31,6 @@ public interface AdminService {
             String adminIdentifier
     );
 
+    void resetBusinessPassword(UUID businessId, String newPassword);
 
 }

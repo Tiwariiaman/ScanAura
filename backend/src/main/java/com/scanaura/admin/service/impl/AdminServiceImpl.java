@@ -3,11 +3,13 @@
     import com.scanaura.admin.dto.*;
     import com.scanaura.admin.service.AdminService;
     import com.scanaura.auth.entity.User;
+    import com.scanaura.auth.repository.UserRepository;
     import com.scanaura.business.entity.Business;
     import com.scanaura.business.repository.BusinessRepository;
     import com.scanaura.common.enums.QrType;
     import com.scanaura.common.enums.RequestStatus;
     import com.scanaura.common.enums.SubscriptionStatus;
+    import com.scanaura.common.enums.UserRole;
     import com.scanaura.common.exception.BusinessException;
     import com.scanaura.common.security.JwtService;
     import com.scanaura.qr.dto.QrResponse;
@@ -19,7 +21,9 @@
     import com.scanaura.subscription.entity.Subscription;
     import com.scanaura.subscription.repository.SubscriptionRepository;
     import com.scanaura.subscription.repository.SubscriptionRequestRepository;
+    import jakarta.transaction.Transactional;
     import lombok.RequiredArgsConstructor;
+    import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.stereotype.Service;
 
     import java.time.LocalDate;
@@ -37,6 +41,9 @@
         private final QrScanDailyRepository qrScanDailyRepository;
         private final QrService qrService;
         private final JwtService jwtService;
+
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
 
         @Override
         public DashboardResponse getDashboard() {
@@ -358,6 +365,35 @@
                     supportToken,
                     1800
             );
+        }
+
+        @Override
+        @Transactional
+        public void resetBusinessPassword(
+                UUID businessId,
+                String newPassword
+        ) {
+            Business business = businessRepository.findById(businessId)
+                    .orElseThrow(() ->
+                            new BusinessException("Business not found."));
+
+            User owner = business.getOwner();
+
+            if (owner == null
+                    || Boolean.TRUE.equals(owner.getDeleted())
+                    || !Boolean.TRUE.equals(owner.getActive())) {
+                throw new BusinessException(
+                        "This business owner account is unavailable.");
+            }
+
+            if (owner.getRole() == null
+                    || owner.getRole() == UserRole.ADMIN) {
+                throw new BusinessException(
+                        "Cannot reset the password for this account.");
+            }
+
+            owner.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(owner);
         }
 
     }

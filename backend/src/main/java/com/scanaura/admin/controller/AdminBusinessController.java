@@ -1,6 +1,7 @@
 package com.scanaura.admin.controller;
 
 import com.scanaura.admin.dto.AdminImpersonationResponse;
+import com.scanaura.admin.dto.AdminResetBusinessPasswordRequest;
 import com.scanaura.admin.dto.BusinessSummaryResponse;
 import com.scanaura.admin.service.AdminService;
 import com.scanaura.common.enums.BillingCycle;
@@ -121,6 +122,25 @@ public class AdminBusinessController {
                         true,
                         "Business support login created successfully.",
                         result
+                )
+        );
+    }
+
+    @PatchMapping("/{businessId}/password")
+    public ResponseEntity<ApiResponse<String>> resetBusinessPassword(
+            @PathVariable UUID businessId,
+            @Valid @RequestBody AdminResetBusinessPasswordRequest request
+    ) {
+        adminService.resetBusinessPassword(
+                businessId,
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Business password reset successfully.",
+                        "SUCCESS"
                 )
         );
     }
