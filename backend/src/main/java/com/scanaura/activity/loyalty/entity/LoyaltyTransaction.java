@@ -4,6 +4,7 @@ import com.scanaura.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -34,6 +35,9 @@ public class LoyaltyTransaction extends BaseEntity {
 
     @Column(length = 255)
     private String description;
+
+    @Column(name = "bill_amount", precision = 10, scale = 2)
+    private BigDecimal billAmount;
 
     public enum TransactionType {
         EARN,

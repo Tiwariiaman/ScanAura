@@ -30,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -238,14 +240,7 @@ public class LoyaltyService {
                                 )
                         );
 
-        if (hasEarnedToday(
-                businessId,
-                customer.getId()
-        )) {
-            throw new IllegalStateException(
-                    "You have already earned loyalty points today."
-            );
-        }
+
 
         LocalDateTime now =
                 LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
@@ -279,11 +274,23 @@ public class LoyaltyService {
     // VERIFY TEMPORARY VISIT QR
     // ============================================================
 
+
     @Transactional
     public LoyaltyCustomerResponse verifyCustomerVisitQr(
             UUID businessId,
-            UUID qrToken
+            UUID qrToken,
+            BigDecimal billAmount
     ) {
+
+        if (billAmount == null
+                || billAmount.compareTo(BigDecimal.ONE) < 0
+                || billAmount.compareTo(
+                new BigDecimal("1000000.00")
+        ) > 0) {
+            throw new IllegalArgumentException(
+                    "Bill amount must be between ₹1 and ₹10,00,000."
+            );
+        }
 
         LoyaltyVisitQr visitQr =
                 loyaltyVisitQrRepository
@@ -309,24 +316,6 @@ public class LoyaltyService {
             );
         }
 
-        LoyaltyCustomer customer =
-                loyaltyCustomerRepository
-                        .findById(visitQr.getCustomerId())
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "Loyalty customer not found."
-                                )
-                        );
-
-        if (hasEarnedToday(
-                businessId,
-                customer.getId()
-        )) {
-            throw new IllegalStateException(
-                    "You have already earned loyalty points today."
-            );
-        }
-
         LoyaltySettings settings =
                 loyaltySettingsRepository
                         .findByBusinessId(businessId)
@@ -342,10 +331,20 @@ public class LoyaltyService {
             );
         }
 
-        int points =
-                settings.getPointsPerVisit() != null
-                        ? settings.getPointsPerVisit()
-                        : DAILY_POINTS;
+        LoyaltyCustomer customer =
+                loyaltyCustomerRepository
+                        .findById(visitQr.getCustomerId())
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "Loyalty customer not found."
+                                )
+                        );
+
+        // ₹1 spent = 1 point.
+        // Fractional rupees do not earn an additional whole point.
+        int points = billAmount
+                .setScale(0, RoundingMode.DOWN)
+                .intValueExact();
 
         customer.setPointsBalance(
                 customer.getPointsBalance() + points
@@ -366,12 +365,15 @@ public class LoyaltyService {
                                 LoyaltyTransaction.TransactionType.EARN
                         )
                         .points(points)
-                        .description("Daily visit reward")
+                        .billAmount(billAmount)
+                        .description("Purchase loyalty reward")
                         .build();
 
         loyaltyTransactionRepository.save(transaction);
 
-        visitQr.setUsedAt(LocalDateTime.now());
+        visitQr.setUsedAt(
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+        );
 
         loyaltyVisitQrRepository.save(visitQr);
 
@@ -555,7 +557,11 @@ public class LoyaltyService {
                         .businessId(businessId)
                         .title(request.getTitle().trim())
                         .pointsRequired(request.getPointsRequired())
-                        .rewardAmount(request.getRewardAmount())
+                        .rewardAmount(
+                                request.getRewardAmount() != null
+                                        ? request.getRewardAmount()
+                                        : BigDecimal.ZERO
+                        )
                         .active(true)
                         .build();
 
@@ -588,9 +594,9 @@ public class LoyaltyService {
         reward.setPointsRequired(
                 request.getPointsRequired()
         );
-        reward.setRewardAmount(
-                request.getRewardAmount()
-        );
+        if (request.getRewardAmount() != null) {
+            reward.setRewardAmount(request.getRewardAmount());
+        }
         reward.setActive(
                 request.getActive()
         );
@@ -633,12 +639,24 @@ public class LoyaltyService {
             String mobileNumber,
             LoyaltyClaimRequest request
     ) {
-
-        LoyaltyCustomer customer =
+        LoyaltyCustomer initialCustomer =
                 loyaltyCustomerRepository
                         .findByBusinessIdAndMobileNumber(
                                 businessId,
                                 mobileNumber.trim()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Loyalty customer not found."
+                                )
+                        );
+
+        // Lock the customer while checking and reserving points.
+        LoyaltyCustomer customer =
+                loyaltyCustomerRepository
+                        .findByIdAndBusinessIdForUpdate(
+                                initialCustomer.getId(),
+                                businessId
                         )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
@@ -664,66 +682,52 @@ public class LoyaltyService {
             );
         }
 
-        if (customer.getPointsBalance()
-                < reward.getPointsRequired()) {
+        int reservedPoints =
+                loyaltyClaimRepository
+                        .findAllByBusinessIdAndCustomerIdAndStatus(
+                                businessId,
+                                customer.getId(),
+                                LoyaltyClaim.ClaimStatus.PENDING
+                        )
+                        .stream()
+                        .mapToInt(claim -> claim.getPointsUsed())
+                        .sum();
 
+        int availablePoints =
+                customer.getPointsBalance() - reservedPoints;
+
+        if (availablePoints < reward.getPointsRequired()) {
             throw new IllegalStateException(
-                    "You do not have enough loyalty points."
+                    "You do not have enough available loyalty points."
             );
         }
 
-        customer.setPointsBalance(
-                customer.getPointsBalance()
-                        - reward.getPointsRequired()
-        );
-
-        customer.setTotalPointsRedeemed(
-                customer.getTotalPointsRedeemed()
-                        + reward.getPointsRequired()
-        );
-
-        loyaltyCustomerRepository.save(customer);
-
-        LoyaltyTransaction transaction =
-                LoyaltyTransaction.builder()
-                        .businessId(businessId)
-                        .customerId(customer.getId())
-                        .transactionType(
-                                LoyaltyTransaction.TransactionType.REDEEM
-                        )
-                        .points(reward.getPointsRequired())
-                        .description(
-                                "Reward claimed: "
-                                        + reward.getTitle()
-                        )
-                        .build();
-
-        loyaltyTransactionRepository.save(transaction);
-
+        // Create a pending claim. Do not deduct points yet.
         LoyaltyClaim claim =
                 LoyaltyClaim.builder()
                         .businessId(businessId)
                         .customerId(customer.getId())
                         .rewardId(reward.getId())
-                        .pointsUsed(
-                                reward.getPointsRequired()
-                        )
+                        .pointsUsed(reward.getPointsRequired())
                         .rewardAmount(
-                                reward.getRewardAmount()
+                                reward.getRewardAmount() != null
+                                        ? reward.getRewardAmount()
+                                        : BigDecimal.ZERO
                         )
                         .qrToken(UUID.randomUUID())
-                        .status(
-                                LoyaltyClaim.ClaimStatus.PENDING
-                        )
+                        .status(LoyaltyClaim.ClaimStatus.PENDING)
                         .build();
 
         LoyaltyClaim savedClaim =
                 loyaltyClaimRepository.save(claim);
 
+        int remainingAvailablePoints =
+                availablePoints - reward.getPointsRequired();
+
         return loyaltyMapper.toClaimResponse(
                 savedClaim,
                 reward,
-                customer.getPointsBalance()
+                remainingAvailablePoints
         );
     }
 
@@ -737,7 +741,6 @@ public class LoyaltyService {
             UUID businessId,
             LoyaltyClaimVerifyRequest request
     ) {
-
         LoyaltyClaim claim =
                 loyaltyClaimRepository
                         .findByQrTokenAndBusinessId(
@@ -750,9 +753,7 @@ public class LoyaltyService {
                                 )
                         );
 
-        if (claim.getStatus()
-                != LoyaltyClaim.ClaimStatus.PENDING) {
-
+        if (claim.getStatus() != LoyaltyClaim.ClaimStatus.PENDING) {
             throw new IllegalStateException(
                     "This reward has already been processed."
             );
@@ -770,30 +771,81 @@ public class LoyaltyService {
                                 )
                         );
 
-        claim.setStatus(
-                LoyaltyClaim.ClaimStatus.GRANTED
-        );
-
-        claim.setGrantedAt(
-                LocalDateTime.now()
-        );
-
-        LoyaltyClaim savedClaim =
-                loyaltyClaimRepository.save(claim);
-
         LoyaltyCustomer customer =
                 loyaltyCustomerRepository
-                        .findById(claim.getCustomerId())
+                        .findByIdAndBusinessIdForUpdate(
+                                claim.getCustomerId(),
+                                businessId
+                        )
                         .orElseThrow(() ->
                                 new IllegalStateException(
                                         "Loyalty customer not found."
                                 )
                         );
 
+        // New claims deduct points only when the merchant verifies them.
+        // Legacy pending claims already had their points deducted.
+        if (!Boolean.TRUE.equals(claim.getPointsDeducted())) {
+            if (customer.getPointsBalance() < claim.getPointsUsed()) {
+                throw new IllegalStateException(
+                        "Insufficient points to complete this redemption."
+                );
+            }
+
+            customer.setPointsBalance(
+                    customer.getPointsBalance() - claim.getPointsUsed()
+            );
+
+            customer.setTotalPointsRedeemed(
+                    customer.getTotalPointsRedeemed() + claim.getPointsUsed()
+            );
+
+            loyaltyCustomerRepository.save(customer);
+
+            LoyaltyTransaction transaction =
+                    LoyaltyTransaction.builder()
+                            .businessId(businessId)
+                            .customerId(customer.getId())
+                            .transactionType(
+                                    LoyaltyTransaction.TransactionType.REDEEM
+                            )
+                            .points(claim.getPointsUsed())
+                            .description(
+                                    "Reward redeemed: " + reward.getTitle()
+                            )
+                            .build();
+
+            loyaltyTransactionRepository.save(transaction);
+
+            claim.setPointsDeducted(true);
+        }
+
+        claim.setStatus(LoyaltyClaim.ClaimStatus.GRANTED);
+        claim.setGrantedAt(
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata"))
+        );
+
+        LoyaltyClaim savedClaim =
+                loyaltyClaimRepository.save(claim);
+
+        int pendingReservedPoints =
+                loyaltyClaimRepository
+                        .findAllByBusinessIdAndCustomerIdAndStatus(
+                                businessId,
+                                customer.getId(),
+                                LoyaltyClaim.ClaimStatus.PENDING
+                        )
+                        .stream()
+                        .mapToInt(pending -> pending.getPointsUsed())
+                        .sum();
+
+        int remainingAvailablePoints =
+                customer.getPointsBalance() - pendingReservedPoints;
+
         return loyaltyMapper.toClaimResponse(
                 savedClaim,
                 reward,
-                customer.getPointsBalance()
+                remainingAvailablePoints
         );
     }
 

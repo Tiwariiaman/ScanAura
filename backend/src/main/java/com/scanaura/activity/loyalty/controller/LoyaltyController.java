@@ -269,21 +269,23 @@ public class LoyaltyController {
     // VERIFY CUSTOMER VISIT QR
     // ============================================================
 
+
     @PostMapping("/visit/verify")
     public ResponseEntity<
             LoyaltyApiResponse<LoyaltyCustomerResponse>>
     verifyCustomerVisitQr(
-            @Valid @RequestBody LoyaltyClaimVerifyRequest request
+            @Valid @RequestBody LoyaltyVisitVerifyRequest request
     ) {
 
         UUID businessId = getBusinessId();
 
         return ResponseEntity.ok(
                 LoyaltyApiResponse.success(
-                        "Visit verified and loyalty points added successfully.",
+                        "Purchase verified and loyalty points added successfully.",
                         loyaltyService.verifyCustomerVisitQr(
                                 businessId,
-                                request.getQrToken()
+                                request.getQrToken(),
+                                request.getBillAmount()
                         )
                 )
         );

@@ -67,4 +67,10 @@ public class LoyaltyClaim extends BaseEntity {
         GRANTED,
         CANCELLED
     }
+
+    @Builder.Default
+    @Column(name = "points_deducted", nullable = false)
+    private Boolean pointsDeducted = true;
+
+
 }

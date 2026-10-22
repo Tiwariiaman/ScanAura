@@ -85,6 +85,7 @@ public class LoyaltyMapper {
                 .transactionType(
                         transaction.getTransactionType()
                 )
+                .billAmount(transaction.getBillAmount())
                 .points(transaction.getPoints())
                 .description(transaction.getDescription())
                 .createdAt(transaction.getCreatedAt())

@@ -24,7 +24,7 @@ public class LoyaltyRewardRequest {
     @Min(value = 1, message = "Points required must be greater than 0")
     private Integer pointsRequired;
 
-    @NotNull(message = "Reward amount is required")
+
     @DecimalMin(
             value = "0.0",
             inclusive = true,
