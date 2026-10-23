@@ -74,4 +74,10 @@ public class BusinessResponse {
     private boolean galleryEnabled;
 
     private String publicSlug;
+    private Boolean dineInEnabled;
+    private Boolean takeawayEnabled;
+    private Boolean deliveryEnabled;
+    private Boolean roomServiceEnabled;
+    private Boolean selfServiceEnabled;
+    private Boolean pickupEnabled;
 }

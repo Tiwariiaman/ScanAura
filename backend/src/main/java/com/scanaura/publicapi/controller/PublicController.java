@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.ModelAndView;
 
 @RestController
@@ -20,6 +21,9 @@ import org.springframework.web.servlet.ModelAndView;
 public class PublicController {
 
     private final PublicService publicService;
+
+    @Value("${scanaura.public-domain:scanaura.in}")
+    private String publicDomain;
 
     @GetMapping("/q/{qrCode}")
     public ResponseEntity<ApiResponse<LandingResponse>> landing(
@@ -85,9 +89,15 @@ public class PublicController {
                 preview.getDescription()
         );
 
+        String canonicalUrl =
+                preview.getPublicSlug() != null
+                        && !preview.getPublicSlug().isBlank()
+                        ? "https://" + preview.getPublicSlug() + "." + publicDomain
+                        : "https://" + publicDomain + "/q/" + qrCode;
+
         modelAndView.addObject(
                 "canonicalUrl",
-                "https://scanaura.in/q/" + qrCode
+                canonicalUrl
         );
 
         return modelAndView;

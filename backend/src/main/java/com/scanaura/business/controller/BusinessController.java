@@ -103,7 +103,7 @@ public class BusinessController {
             "support", "help", "blog", "docs",
             "dashboard", "login", "register",
             "signup", "pricing", "about",
-            "contact", "status", "cdn", "static"
+            "contact", "status", "cdn", "static", "business"
     );
 
     @GetMapping("/public-slug/check")

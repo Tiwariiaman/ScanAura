@@ -2,7 +2,6 @@ package com.scanaura.catalog.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,11 +19,11 @@ public class CatalogRequest {
 
     private String description;
 
-    @NotNull(message = "Price is required")
+    // Optional: null means the business has not provided a price yet.
     @DecimalMin(
             value = "0.0",
             inclusive = false,
-            message = "Price must be greater than zero"
+            message = "Price must be greater than zero when provided"
     )
     private BigDecimal price;
 

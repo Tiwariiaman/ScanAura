@@ -29,7 +29,7 @@ public class Catalog extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = true, precision = 10, scale = 2)
     private BigDecimal price;
 
     private String imageUrl;

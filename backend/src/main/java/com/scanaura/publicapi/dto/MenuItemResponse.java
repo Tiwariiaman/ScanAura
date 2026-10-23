@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class MenuItemResponse {
 
+    private String id;
+
     private String name;
 
     private String description;

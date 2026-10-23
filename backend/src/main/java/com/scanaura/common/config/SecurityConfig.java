@@ -88,10 +88,14 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public APIs
+                        // Public APIs and server-rendered business pages / SEO endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/api/public/**"
+                                "/api/public/**",
+                                "/",
+                                "/{slug}",
+                                "/sitemap.xml",
+                                "/robots.txt"
                         ).permitAll()
 
                         // CORS preflight

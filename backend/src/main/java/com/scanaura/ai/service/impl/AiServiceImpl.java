@@ -136,10 +136,6 @@ public class AiServiceImpl implements AiService {
                     continue;
                 }
 
-                if (item.getPrice() == null) {
-                    continue;
-                }
-
                 if (catalogRepository.existsByBusinessAndNameIgnoreCase(
                         business,
                         item.getName())) {
@@ -159,8 +155,11 @@ public class AiServiceImpl implements AiService {
                 catalog.setPrice(item.getPrice());
 
                 if (business.getBusinessType() == BusinessType.FOOD) {
-                    catalog.setVeg(item.getVeg());
+                    // For food businesses, missing classification defaults to vegetarian.
+                    // Explicit false from the menu is preserved as non-vegetarian.
+                    catalog.setVeg(item.getVeg() == null ? Boolean.TRUE : item.getVeg());
                 } else {
+                    // Veg/non-veg is not applicable to non-food business types.
                     catalog.setVeg(null);
                 }
 

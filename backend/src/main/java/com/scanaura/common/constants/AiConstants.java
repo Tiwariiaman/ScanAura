@@ -70,8 +70,9 @@ public final class AiConstants {
 
             - categoryName can be null.
             - description should be "" if missing.
-            - price must be a number.
-            - veg must be true, false or null.
+            - price must be a number when shown; use null when the menu does not show a price.
+            - veg must be true or false. If the menu does not mark an item non-vegetarian, default veg to true.
+            - Set veg=false only when the menu clearly marks the item non-vegetarian.
             - Ignore taxes.
             - Ignore GST.
             - Ignore offers, discounts and promotional prices.
@@ -86,12 +87,10 @@ public final class AiConstants {
 
             VEGETARIAN STATUS:
 
-            - true = clearly vegetarian.
-            - false = clearly non-vegetarian.
-            - null = unknown or ambiguous.
-            - Never guess vegetarian status from an ambiguous item name.
-            - Use the menu's explicit vegetarian/non-vegetarian indicators
-              whenever available.
+            - Default veg=true for every FOOD item unless the menu clearly identifies it as non-vegetarian.
+            - Set veg=false only when an explicit non-vegetarian marker or clear menu label supports it.
+            - Do not leave veg null for FOOD items; when no marker exists, use true as the default.
+            - Use the menu's explicit vegetarian/non-vegetarian indicators whenever available.
             - Preserve vegetarian status across genuine size or portion variants.
 
             PRICE AND VARIANT RULES:
@@ -104,7 +103,7 @@ public final class AiConstants {
 
             Create one separate JSON item for EACH valid variant.
 
-            Every generated variant must have exactly one numeric price.
+            Every generated variant must have one price value; use null if its price is not shown.
 
             EXPLICIT SIZE / VARIANT LABELS:
 
@@ -224,7 +223,7 @@ public final class AiConstants {
             - Return valid JSON only.
             - Return exactly the requested top-level structure.
             - Every item must have one name.
-            - Every item must have one numeric price.
+            - Price may be numeric or null when the source does not show a price.
             - Never discard clearly identified variant prices.
             - Never invent unsupported variants.
             - Every FOOD item must contain veg as true, false or null.
@@ -303,7 +302,7 @@ public final class AiConstants {
             - Clean obvious OCR mistakes when the intended text is clear.
             - categoryName can be null when no category is identifiable.
             - description should be "" when missing.
-            - price must contain one numeric value.
+            - price must contain one numeric value when shown; use null when missing or unreadable.
             - Ignore taxes.
             - Ignore GST.
             - Ignore promotional prices unless they are clearly the

@@ -77,4 +77,11 @@ public class BusinessRequest {
             message = "Public slug can contain only lowercase letters, numbers and single hyphens"
     )
     private String publicSlug;
+
+    private Boolean dineInEnabled;
+    private Boolean takeawayEnabled;
+    private Boolean deliveryEnabled;
+    private Boolean roomServiceEnabled;
+    private Boolean selfServiceEnabled;
+    private Boolean pickupEnabled;
 }

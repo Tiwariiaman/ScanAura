@@ -15,6 +15,7 @@ import java.util.UUID;
 public class LandingResponse {
 
     private String businessName;
+    private String publicSlug;
     private BusinessType businessType;
     private String city;
     private String logoUrl;
@@ -47,6 +48,12 @@ public class LandingResponse {
 
     private String whatsapp;
     private Boolean whatsappEnabled;
+    private Boolean dineInEnabled;
+    private Boolean takeawayEnabled;
+    private Boolean deliveryEnabled;
+    private Boolean roomServiceEnabled;
+    private Boolean selfServiceEnabled;
+    private Boolean pickupEnabled;
 
     // Location
     private String address;

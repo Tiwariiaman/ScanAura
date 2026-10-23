@@ -105,4 +105,18 @@ public class Business extends BaseEntity {
 
     @Column(name = "public_slug", length = 100, unique = true)
     private String publicSlug;
+
+    // WhatsApp order fulfilment options, controlled by the business owner.
+    @Column(name = "order_dine_in_enabled", nullable = false)
+    private boolean dineInEnabled = true;
+    @Column(name = "order_takeaway_enabled", nullable = false)
+    private boolean takeawayEnabled = true;
+    @Column(name = "order_delivery_enabled", nullable = false)
+    private boolean deliveryEnabled = true;
+    @Column(name = "order_room_service_enabled", nullable = false)
+    private boolean roomServiceEnabled = true;
+    @Column(name = "order_self_service_enabled", nullable = false)
+    private boolean selfServiceEnabled = true;
+    @Column(name = "order_pickup_enabled", nullable = false)
+    private boolean pickupEnabled = true;
 }

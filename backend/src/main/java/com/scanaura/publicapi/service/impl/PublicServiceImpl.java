@@ -3,6 +3,7 @@ package com.scanaura.publicapi.service.impl;
 import com.scanaura.activity.loyalty.entity.LoyaltySettings;
 import com.scanaura.activity.loyalty.repository.LoyaltySettingsRepository;
 import com.scanaura.business.entity.Business;
+import com.scanaura.business.repository.BusinessRepository;
 import com.scanaura.catalog.entity.Catalog;
 import com.scanaura.catalog.repository.CatalogRepository;
 import com.scanaura.category.entity.Category;
@@ -27,6 +28,7 @@ import java.util.List;
 public class PublicServiceImpl implements PublicService {
 
     private final QrCodeRepository qrCodeRepository;
+    private final BusinessRepository businessRepository;
     private final CategoryRepository categoryRepository;
     private final CatalogRepository catalogRepository;
     private final SubscriptionValidationService subscriptionValidationService;
@@ -135,6 +137,7 @@ public class PublicServiceImpl implements PublicService {
         return LandingResponse.builder()
                 .businessId(business.getId())
                 .businessName(business.getBusinessName())
+                .publicSlug(business.getPublicSlug())
                 .businessType(business.getBusinessType())
                 .city(business.getCity())
                 .logoUrl(business.getLogoUrl())
@@ -157,6 +160,12 @@ public class PublicServiceImpl implements PublicService {
                 .whatsappEnabled(
                         whatsappAvailable
                 )
+                .dineInEnabled(business.isDineInEnabled())
+                .takeawayEnabled(business.isTakeawayEnabled())
+                .deliveryEnabled(business.isDeliveryEnabled())
+                .roomServiceEnabled(business.isRoomServiceEnabled())
+                .selfServiceEnabled(business.isSelfServiceEnabled())
+                .pickupEnabled(business.isPickupEnabled())
 
                 // Location
                 .address(business.getAddress())
@@ -254,10 +263,65 @@ public class PublicServiceImpl implements PublicService {
 
         Business business = getBusiness(qrCode);
 
+        return buildSharePreview(business, false);
+    }
+
+    @Override
+    public SharePreviewResponse getPublicBusinessPage(String publicSlug) {
+
+        if (publicSlug == null || !publicSlug.matches("^[a-z0-9]+(?:-[a-z0-9]+)*$")) {
+            throw new BusinessException("Business page not found.");
+        }
+
+        Business business = businessRepository.findByPublicSlugIgnoreCase(publicSlug)
+                .filter(value -> Boolean.TRUE.equals(value.getActive()))
+                .orElseThrow(() -> new BusinessException("Business page not found."));
+
+        subscriptionValidationService.validateBusinessAccess(business);
+
+        return buildSharePreview(business, true);
+    }
+
+    @Override
+    public List<Business> getBusinessesForSitemap() {
+        return businessRepository.findAllByPublicSlugIsNotNullAndActiveTrueOrderByBusinessNameAsc();
+    }
+
+    private SharePreviewResponse buildSharePreview(Business business, boolean includeMenu) {
+
+        String description = business.getDescription();
+        if (description == null || description.isBlank()) {
+            String location = business.getCity() == null || business.getCity().isBlank()
+                    ? ""
+                    : " in " + business.getCity().trim();
+            description = "Explore " + business.getBusinessName()
+                    + location + " — products, services, contact details and more on ScanAura.";
+        }
+
+        List<MenuCategoryResponse> menu = includeMenu
+                ? buildMenuResponse(business).getMenu()
+                : List.of();
+
         return SharePreviewResponse.builder()
                 .businessName(business.getBusinessName())
                 .logoUrl(business.getLogoUrl())
-                .description("Explore our Digital Presence")
+                .description(description)
+                .businessType(business.getBusinessType() == null ? "LocalBusiness" : business.getBusinessType().name())
+                .publicSlug(business.getPublicSlug())
+                .phone(business.isCallEnabled() ? business.getPhone() : null)
+                .whatsapp(business.getWhatsapp())
+                .address(business.getAddress())
+                .city(business.getCity())
+                .state(business.getState())
+                .country(business.getCountry())
+                .pincode(business.getPincode())
+                .website(business.getWebsite())
+                .googleMapsUrl(business.getGoogleMapsUrl())
+                .googleReviewUrl(business.getGoogleReviewUrl())
+                .instagramUrl(business.getInstagramUrl())
+                .facebookUrl(business.getFacebookUrl())
+                .youtubeUrl(business.getYoutubeUrl())
+                .menu(menu)
                 .build();
     }
 
@@ -265,17 +329,18 @@ public class PublicServiceImpl implements PublicService {
     public MenuResponse getMenu(String qrCode) {
 
         Business business = getBusiness(qrCode);
-
         subscriptionValidationService.validateBusinessAccess(business);
+
+        return buildMenuResponse(business);
+    }
+
+    private MenuResponse buildMenuResponse(Business business) {
 
         List<Category> categories =
                 categoryRepository
-                        .findByBusinessOrderByDisplayOrderAsc(
-                                business
-                        );
+                        .findByBusinessOrderByDisplayOrderAsc(business);
 
-        List<MenuCategoryResponse> menu =
-                new ArrayList<>();
+        List<MenuCategoryResponse> menu = new ArrayList<>();
 
         for (Category category : categories) {
 
@@ -286,80 +351,53 @@ public class PublicServiceImpl implements PublicService {
                                     category
                             );
 
-            List<MenuItemResponse> items =
-                    catalogs.stream()
-                            .map(catalog ->
-                                    MenuItemResponse.builder()
-                                            .name(catalog.getName())
-                                            .description(
-                                                    catalog.getDescription()
-                                            )
-                                            .price(catalog.getPrice())
-                                            .imageUrl(
-                                                    catalog.getImageUrl()
-                                            )
-                                            .veg(catalog.getVeg())
-                                            .available(
-                                                    catalog.getAvailable()
-                                            )
-                                            .bestSeller(
-                                                    catalog.getBestSeller()
-                                            )
-                                            .recommended(
-                                                    catalog.getRecommended()
-                                            )
-                                            .build()
-                            )
-                            .toList();
+            List<MenuItemResponse> items = catalogs.stream()
+                    .filter(catalog -> !Boolean.FALSE.equals(catalog.getAvailable()))
+                    .map(catalog -> MenuItemResponse.builder()
+                            .id(catalog.getId() == null ? null : catalog.getId().toString())
+                            .name(catalog.getName())
+                            .description(catalog.getDescription())
+                            .price(catalog.getPrice())
+                            .imageUrl(catalog.getImageUrl())
+                            .veg(catalog.getVeg())
+                            .available(catalog.getAvailable())
+                            .bestSeller(catalog.getBestSeller())
+                            .recommended(catalog.getRecommended())
+                            .build())
+                    .toList();
 
-            menu.add(
-                    MenuCategoryResponse.builder()
-                            .categoryName(category.getName())
-                            .items(items)
-                            .build()
-            );
+            if (!items.isEmpty()) {
+                menu.add(MenuCategoryResponse.builder()
+                        .categoryName(category.getName())
+                        .items(items)
+                        .build());
+            }
         }
 
         List<Catalog> uncategorizedItems =
                 catalogRepository
-                        .findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(
-                                business
-                        );
+                        .findByBusinessAndCategoryIsNullOrderByDisplayOrderAsc(business);
 
-        if (!uncategorizedItems.isEmpty()) {
+        List<MenuItemResponse> uncategorized = uncategorizedItems.stream()
+                .filter(catalog -> !Boolean.FALSE.equals(catalog.getAvailable()))
+                .map(catalog -> MenuItemResponse.builder()
+                        .id(catalog.getId() == null ? null : catalog.getId().toString())
+                        .name(catalog.getName())
+                        .description(catalog.getDescription())
+                        .price(catalog.getPrice())
+                        .imageUrl(catalog.getImageUrl())
+                        .veg(catalog.getVeg())
+                        .available(catalog.getAvailable())
+                        .bestSeller(catalog.getBestSeller())
+                        .recommended(catalog.getRecommended())
+                        .build())
+                .toList();
 
-            List<MenuItemResponse> items =
-                    uncategorizedItems.stream()
-                            .map(catalog ->
-                                    MenuItemResponse.builder()
-                                            .name(catalog.getName())
-                                            .description(
-                                                    catalog.getDescription()
-                                            )
-                                            .price(catalog.getPrice())
-                                            .imageUrl(
-                                                    catalog.getImageUrl()
-                                            )
-                                            .veg(catalog.getVeg())
-                                            .available(
-                                                    catalog.getAvailable()
-                                            )
-                                            .bestSeller(
-                                                    catalog.getBestSeller()
-                                            )
-                                            .recommended(
-                                                    catalog.getRecommended()
-                                            )
-                                            .build()
-                            )
-                            .toList();
-
-            menu.add(
-                    MenuCategoryResponse.builder()
-                            .categoryName(null)
-                            .items(items)
-                            .build()
-            );
+        if (!uncategorized.isEmpty()) {
+            menu.add(MenuCategoryResponse.builder()
+                    .categoryName("Other items")
+                    .items(uncategorized)
+                    .build());
         }
 
         return MenuResponse.builder()

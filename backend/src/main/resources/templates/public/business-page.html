@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${pageTitle}">Business | ScanAura</title>
+    <meta name="description" th:content="${metaDescription}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="googlebot" content="index, follow, max-image-preview:large">
+    <link rel="canonical" th:href="${canonicalUrl}">
+
+    <meta property="og:type" content="business.business">
+    <meta property="og:title" th:content="${businessName}">
+    <meta property="og:description" th:content="${metaDescription}">
+    <meta property="og:url" th:content="${canonicalUrl}">
+    <meta property="og:site_name" content="ScanAura">
+    <meta property="og:locale" content="en_IN">
+    <meta th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+          property="og:image" th:content="${logoUrl}">
+    <meta th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+          property="og:image:alt" th:content="${businessName}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${businessName}">
+    <meta name="twitter:description" th:content="${metaDescription}">
+    <meta th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+          name="twitter:image" th:content="${logoUrl}">
+
+    <script type="application/ld+json" th:utext="${schemaJson}">{}</script>
+
+    <style>
+        :root { color-scheme: light; --brand: #2563eb; --ink: #15202b; --muted: #5d6b78; --line: #e5eaf0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #f6f8fb; color: var(--ink); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+        a { color: var(--brand); text-decoration: none; }
+        .top { background: #fff; border-bottom: 1px solid var(--line); }
+        .top-inner, main, footer { width: min(100% - 32px, 960px); margin: 0 auto; }
+        .top-inner { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .brand { font-size: 14px; font-weight: 800; letter-spacing: .2px; }
+        .brand span { color: var(--brand); }
+        main { padding: 28px 0 48px; }
+        .hero, .section { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: clamp(20px, 4vw, 34px); margin-bottom: 18px; }
+        .hero { display: flex; align-items: flex-start; gap: 22px; }
+        .logo { width: 104px; height: 104px; border-radius: 18px; object-fit: contain; background: #f7f9fc; border: 1px solid var(--line); flex: 0 0 auto; }
+        h1 { font-size: clamp(27px, 4vw, 38px); line-height: 1.12; letter-spacing: -.7px; margin: 0 0 10px; }
+        h2 { font-size: 20px; margin: 0 0 18px; }
+        h3 { margin: 0 0 6px; font-size: 16px; }
+        p { line-height: 1.65; }
+        .description { margin: 0; color: var(--muted); max-width: 680px; white-space: pre-line; }
+        .eyebrow { color: var(--brand); font-size: 12px; text-transform: uppercase; letter-spacing: 1.3px; font-weight: 800; margin: 0 0 8px; }
+        .details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .detail { padding: 14px; border: 1px solid var(--line); border-radius: 14px; overflow-wrap: anywhere; }
+        .label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+        .menu-category { margin-top: 22px; }
+        .menu-category:first-child { margin-top: 0; }
+        .items { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+        .item { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; gap: 12px; }
+        .item img { width: 68px; height: 68px; object-fit: cover; border-radius: 10px; background: #f5f6f8; }
+        .item-desc { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+        .price { margin-top: 8px; font-weight: 800; }
+        .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .pill { display: inline-flex; align-items: center; border: 1px solid var(--line); padding: 10px 14px; border-radius: 999px; font-weight: 700; font-size: 14px; background: #fff; }
+        footer { padding: 0 0 28px; color: var(--muted); font-size: 12px; text-align: center; }
+        @media (max-width: 560px) { .hero { display: block; } .logo { width: 82px; height: 82px; margin-bottom: 18px; } }
+    </style>
+</head>
+<body>
+<header class="top">
+    <div class="top-inner">
+        <a class="brand" href="https://scanaura.in" aria-label="ScanAura home">Scan<span>Aura</span></a>
+        <span style="color:#687684;font-size:12px">Business profile</span>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <img class="logo"
+             th:if="${logoUrl != null and !#strings.isEmpty(logoUrl)}"
+             th:src="${logoUrl}" th:alt="${businessName} logo">
+        <div style="min-width:0">
+            <p class="eyebrow" th:text="${page.businessType}">Local business</p>
+            <h1 th:text="${businessName}">Business name</h1>
+            <p class="description" th:text="${description}">Business description</p>
+            <div class="links">
+                <a class="pill" th:if="${page.phone != null and !#strings.isEmpty(page.phone)}"
+                   th:href="|tel:${page.phone}|">Call business</a>
+                <a class="pill" th:if="${page.whatsapp != null and !#strings.isEmpty(page.whatsapp)}"
+                   th:href="|https://wa.me/${#strings.replace(#strings.replace(page.whatsapp, '+', ''), ' ', '')}|"
+                   target="_blank" rel="noopener">WhatsApp</a>
+                <a class="pill" th:if="${page.googleMapsUrl != null and !#strings.isEmpty(page.googleMapsUrl)}"
+                   th:href="${page.googleMapsUrl}" target="_blank" rel="noopener">Directions</a>
+                <a class="pill" th:if="${page.googleReviewUrl != null and !#strings.isEmpty(page.googleReviewUrl)}"
+                   th:href="${page.googleReviewUrl}" target="_blank" rel="noopener">Google reviews</a>
+                <a class="pill" th:if="${page.website != null and !#strings.isEmpty(page.website)}"
+                   th:href="${page.website}" target="_blank" rel="noopener">Website</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section"
+             th:if="${(page.address != null and !#strings.isEmpty(page.address)) or (page.city != null and !#strings.isEmpty(page.city)) or (page.phone != null and !#strings.isEmpty(page.phone))}">
+        <h2>Business information</h2>
+        <div class="details">
+            <div class="detail" th:if="${page.address != null and !#strings.isEmpty(page.address)}">
+                <span class="label">Address</span>
+                <span th:text="${page.address}">Address</span>
+            </div>
+            <div class="detail" th:if="${page.city != null and !#strings.isEmpty(page.city)}">
+                <span class="label">City</span>
+                <span th:text="${page.city}">City</span>
+                <span th:if="${page.state != null and !#strings.isEmpty(page.state)}"
+                      th:text="|, ${page.state}|"></span>
+                <span th:if="${page.pincode != null and !#strings.isEmpty(page.pincode)}"
+                      th:text="| ${page.pincode}|"></span>
+            </div>
+            <div class="detail" th:if="${page.phone != null and !#strings.isEmpty(page.phone)}">
+                <span class="label">Phone</span>
+                <a th:href="|tel:${page.phone}|" th:text="${page.phone}">Phone number</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section"
+             th:if="${page.menu != null and !#lists.isEmpty(page.menu)}">
+        <h2>Products and offerings</h2>
+        <div th:each="category : ${page.menu}" class="menu-category">
+            <h3 th:if="${category.categoryName != null and !#strings.isEmpty(category.categoryName)}"
+                th:text="${category.categoryName}">Category</h3>
+            <div class="items">
+                <article class="item" th:each="item : ${category.items}">
+                    <img th:if="${item.imageUrl != null and !#strings.isEmpty(item.imageUrl)}"
+                         th:src="${item.imageUrl}" th:alt="${item.name}" loading="lazy">
+                    <div style="min-width:0">
+                        <h3 th:text="${item.name}">Product</h3>
+                        <p class="item-desc"
+                           th:if="${item.description != null and !#strings.isEmpty(item.description)}"
+                           th:text="${item.description}">Description</p>
+                        <div class="price"
+                             th:text="${item.price != null ? '₹' + item.price : 'NA'}">NA</div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Connect with this business</h2>
+        <div class="links">
+            <a class="pill" th:if="${page.instagramUrl != null and !#strings.isEmpty(page.instagramUrl)}"
+               th:href="${page.instagramUrl}" target="_blank" rel="noopener">Instagram</a>
+            <a class="pill" th:if="${page.facebookUrl != null and !#strings.isEmpty(page.facebookUrl)}"
+               th:href="${page.facebookUrl}" target="_blank" rel="noopener">Facebook</a>
+            <a class="pill" th:if="${page.youtubeUrl != null and !#strings.isEmpty(page.youtubeUrl)}"
+               th:href="${page.youtubeUrl}" target="_blank" rel="noopener">YouTube</a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <span th:text="|${businessName} ·|">Business ·</span>
+    <span>Powered by ScanAura</span>
+</footer>
+</body>
+</html>

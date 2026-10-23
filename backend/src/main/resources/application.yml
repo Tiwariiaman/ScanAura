@@ -61,6 +61,7 @@ gemini:
 
 scanaura:
   frontend-url: ${SCANAURA_FRONTEND_URL:https://scanaura.in}
+  public-domain: ${SCANAURA_PUBLIC_DOMAIN:scanaura.in}
 
   logo-url: ${SCANAURA_LOGO_URL}
 

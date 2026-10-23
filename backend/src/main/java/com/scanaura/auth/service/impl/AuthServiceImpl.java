@@ -715,10 +715,10 @@ public class AuthServiceImpl implements AuthService {
 
         refreshToken.setToken(token);
 
-        // 30 days
+        // One year; refresh extends the session on each successful renewal.
         refreshToken.setExpiresAt(
                 LocalDateTime.now()
-                        .plusDays(30)
+                        .plusDays(365)
         );
 
         refreshToken.setRevoked(false);
@@ -827,7 +827,7 @@ public class AuthServiceImpl implements AuthService {
 
         existingToken.setExpiresAt(
                 LocalDateTime.now()
-                        .plusDays(30)
+                        .plusDays(365)
         );
 
         existingToken.setRevoked(false);

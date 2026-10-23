@@ -60,6 +60,14 @@
                     request.getBusinessType()
             );
 
+            // Default supported services on for new businesses; owners can turn them off.
+            business.setDineInEnabled(request.getDineInEnabled() == null || request.getDineInEnabled());
+            business.setTakeawayEnabled(request.getTakeawayEnabled() == null || request.getTakeawayEnabled());
+            business.setDeliveryEnabled(request.getDeliveryEnabled() == null || request.getDeliveryEnabled());
+            business.setRoomServiceEnabled(request.getRoomServiceEnabled() == null || request.getRoomServiceEnabled());
+            business.setSelfServiceEnabled(request.getSelfServiceEnabled() == null || request.getSelfServiceEnabled());
+            business.setPickupEnabled(request.getPickupEnabled() == null || request.getPickupEnabled());
+
             business.setPhone(
                     request.getPhone()
             );
@@ -133,19 +141,15 @@
             business.setQrSlug(
                     UUID.randomUUID().toString()
             );
-            String publicSlug = normalizePublicSlug(
-                    request.getPublicSlug()
-            );
+            String publicSlug = normalizePublicSlug(request.getPublicSlug());
 
-            if (publicSlug != null) {
-                if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
-                    throw new BusinessException(
-                            "This business link is already taken."
-                    );
-                }
-
-                business.setPublicSlug(publicSlug);
+            if (publicSlug == null) {
+                publicSlug = generateUniquePublicSlug(request.getBusinessName());
+            } else if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
+                throw new BusinessException("This business link is already taken.");
             }
+
+            business.setPublicSlug(publicSlug);
 
             business.setInstagramUrl(request.getInstagramUrl());
             business.setInstagramEnabled(
@@ -298,8 +302,11 @@
                     request.getPhone()
             );
 
-            business.setBrandColor(normalizeBrandColor(request.getBrandColor()));
-
+            // Generic profile/order updates may omit appearance settings.
+            // Keep the saved brand colour unless the appearance UI explicitly sends one.
+            if (request.getBrandColor() != null) {
+                business.setBrandColor(normalizeBrandColor(request.getBrandColor()));
+            }
 
             business.setWhatsapp(
                     request.getWhatsapp()
@@ -345,18 +352,14 @@
                     request.getGoogleReviewUrl()
             );
 
-            if (business.getPublicSlug() == null
-                    && request.getPublicSlug() != null
-                    && !request.getPublicSlug().trim().isEmpty()) {
+            if (business.getPublicSlug() == null || business.getPublicSlug().isBlank()) {
 
-                String publicSlug = normalizePublicSlug(
-                        request.getPublicSlug()
-                );
+                String publicSlug = normalizePublicSlug(request.getPublicSlug());
 
-                if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
-                    throw new BusinessException(
-                            "This business link is already taken."
-                    );
+                if (publicSlug == null) {
+                    publicSlug = generateUniquePublicSlug(request.getBusinessName());
+                } else if (businessRepository.existsByPublicSlugIgnoreCase(publicSlug)) {
+                    throw new BusinessException("This business link is already taken.");
                 }
 
                 business.setPublicSlug(publicSlug);
@@ -429,6 +432,13 @@
             if (request.getGalleryEnabled() != null) {
                 business.setGalleryEnabled(request.getGalleryEnabled());
             }
+
+            if (request.getDineInEnabled() != null) business.setDineInEnabled(request.getDineInEnabled());
+            if (request.getTakeawayEnabled() != null) business.setTakeawayEnabled(request.getTakeawayEnabled());
+            if (request.getDeliveryEnabled() != null) business.setDeliveryEnabled(request.getDeliveryEnabled());
+            if (request.getRoomServiceEnabled() != null) business.setRoomServiceEnabled(request.getRoomServiceEnabled());
+            if (request.getSelfServiceEnabled() != null) business.setSelfServiceEnabled(request.getSelfServiceEnabled());
+            if (request.getPickupEnabled() != null) business.setPickupEnabled(request.getPickupEnabled());
 
             Business updatedBusiness =
                     businessRepository.save(business);
@@ -551,6 +561,12 @@
                     .publicSlug(
                             business.getPublicSlug()
                     )
+                    .dineInEnabled(business.isDineInEnabled())
+                    .takeawayEnabled(business.isTakeawayEnabled())
+                    .deliveryEnabled(business.isDeliveryEnabled())
+                    .roomServiceEnabled(business.isRoomServiceEnabled())
+                    .selfServiceEnabled(business.isSelfServiceEnabled())
+                    .pickupEnabled(business.isPickupEnabled())
                     .instagramUrl(
                             business.getInstagramUrl()
                     )
@@ -597,17 +613,63 @@
 
         private String normalizePublicSlug(String value) {
 
-            if (value == null) {
+            if (value == null || value.trim().isEmpty()) {
                 return null;
             }
 
-            String slug = value.trim().toLowerCase();
+            String slug = value.trim().toLowerCase(java.util.Locale.ROOT);
 
-            if (slug.isEmpty()) {
-                return null;
+            if (!slug.matches("^[a-z0-9]+(?:-[a-z0-9]+)*$") || slug.length() > 100) {
+                throw new BusinessException(
+                        "Business link can contain only lowercase letters, numbers and single hyphens."
+                );
+            }
+            if (isReservedPublicSlug(slug)) {
+                throw new BusinessException("This business link is reserved.");
             }
 
             return slug;
+        }
+
+        private String generateUniquePublicSlug(String businessName) {
+
+            String base = businessName == null ? "" : businessName
+                    .trim()
+                    .toLowerCase(java.util.Locale.ROOT)
+                    .replaceAll("[^a-z0-9]+", "-")
+                    .replaceAll("^-|-$", "");
+
+            if (base.isBlank()) {
+                base = "business";
+            }
+
+            if (base.length() > 70) {
+                base = base.substring(0, 70).replaceAll("-+$", "");
+            }
+
+            String candidate = base;
+            int suffix = 2;
+
+            while (isReservedPublicSlug(candidate)
+                    || businessRepository.existsByPublicSlugIgnoreCase(candidate)) {
+                String ending = "-" + suffix++;
+                int maxBaseLength = 90 - ending.length();
+                String shortened = base.length() > maxBaseLength
+                        ? base.substring(0, maxBaseLength).replaceAll("-+$", "")
+                        : base;
+                candidate = shortened + ending;
+            }
+
+            return candidate;
+        }
+
+        private boolean isReservedPublicSlug(String slug) {
+            return java.util.Set.of(
+                    "www", "api", "admin", "app", "mail", "support", "help",
+                    "blog", "docs", "dashboard", "login", "register", "signup",
+                    "pricing", "about", "contact", "status", "cdn", "static",
+                    "business"
+            ).contains(slug);
         }
 
         @Override

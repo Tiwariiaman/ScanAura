@@ -28,5 +28,7 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
 
     Optional<Business> findByPublicSlugIgnoreCase(String publicSlug);
 
+    List<Business> findAllByPublicSlugIsNotNullAndActiveTrueOrderByBusinessNameAsc();
+
 
 }
