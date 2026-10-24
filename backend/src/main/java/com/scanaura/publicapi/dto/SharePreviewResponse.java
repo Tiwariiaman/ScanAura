@@ -15,6 +15,11 @@ public class SharePreviewResponse {
     private String businessType;
     private String publicSlug;
 
+    // Optional item metadata used by social sharing previews.
+    private String itemName;
+    private String itemImageUrl;
+    private String itemDescription;
+
     private String phone;
     private String whatsapp;
     private String address;

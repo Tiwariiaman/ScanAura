@@ -9,6 +9,7 @@ import com.scanaura.catalog.repository.CatalogRepository;
 import com.scanaura.category.entity.Category;
 import com.scanaura.category.repository.CategoryRepository;
 import com.scanaura.common.exception.BusinessException;
+import com.scanaura.common.enums.QrType;
 import com.scanaura.gallery.dto.GalleryImageResponse;
 import com.scanaura.gallery.repository.GalleryImageRepository;
 import com.scanaura.publicapi.dto.*;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -260,10 +262,27 @@ public class PublicServiceImpl implements PublicService {
 
     @Override
     public SharePreviewResponse getSharePreview(String qrCode) {
+        return getSharePreview(qrCode, null);
+    }
 
+    @Override
+    public SharePreviewResponse getSharePreview(String qrCode, String itemId) {
         Business business = getBusiness(qrCode);
+        if (itemId == null || itemId.isBlank()) {
+            return buildSharePreview(business, false, null);
+        }
 
-        return buildSharePreview(business, false);
+        final UUID catalogId;
+        try {
+            catalogId = UUID.fromString(itemId.trim());
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessException("Menu item not found.");
+        }
+
+        Catalog sharedItem = catalogRepository.findByIdAndBusiness(catalogId, business)
+                .filter(item -> Boolean.TRUE.equals(item.getActive()))
+                .orElseThrow(() -> new BusinessException("Menu item not found."));
+        return buildSharePreview(business, false, sharedItem);
     }
 
     @Override
@@ -279,7 +298,23 @@ public class PublicServiceImpl implements PublicService {
 
         subscriptionValidationService.validateBusinessAccess(business);
 
-        return buildSharePreview(business, true);
+        return buildSharePreview(business, true, null);
+    }
+
+    @Override
+    public String getDigitalQrCodeForPublicSlug(String publicSlug) {
+        if (publicSlug == null || !publicSlug.matches("^[a-z0-9]+(?:-[a-z0-9]+)*$")) {
+            throw new BusinessException("Business page not found.");
+        }
+        Business business = businessRepository.findByPublicSlugIgnoreCase(publicSlug)
+                .filter(value -> Boolean.TRUE.equals(value.getActive()))
+                .orElseThrow(() -> new BusinessException("Business page not found."));
+        subscriptionValidationService.validateBusinessAccess(business);
+        QrCode qr = qrCodeRepository.findByBusinessAndType(business, QrType.DIGITAL)
+                .filter(value -> Boolean.TRUE.equals(value.getActive()))
+                .filter(value -> Boolean.TRUE.equals(value.getAssigned()))
+                .orElseThrow(() -> new BusinessException("Digital QR not found for this business."));
+        return qr.getQrCode();
     }
 
     @Override
@@ -287,7 +322,7 @@ public class PublicServiceImpl implements PublicService {
         return businessRepository.findAllByPublicSlugIsNotNullAndActiveTrueOrderByBusinessNameAsc();
     }
 
-    private SharePreviewResponse buildSharePreview(Business business, boolean includeMenu) {
+    private SharePreviewResponse buildSharePreview(Business business, boolean includeMenu, Catalog sharedItem) {
 
         String description = business.getDescription();
         if (description == null || description.isBlank()) {
@@ -308,6 +343,9 @@ public class PublicServiceImpl implements PublicService {
                 .description(description)
                 .businessType(business.getBusinessType() == null ? "LocalBusiness" : business.getBusinessType().name())
                 .publicSlug(business.getPublicSlug())
+                .itemName(sharedItem == null ? null : sharedItem.getName())
+                .itemImageUrl(sharedItem == null ? null : sharedItem.getImageUrl())
+                .itemDescription(sharedItem == null ? null : sharedItem.getDescription())
                 .phone(business.isCallEnabled() ? business.getPhone() : null)
                 .whatsapp(business.getWhatsapp())
                 .address(business.getAddress())

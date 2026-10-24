@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.ModelAndView;
@@ -66,10 +67,11 @@ public class PublicController {
 
     @GetMapping("/share/{qrCode}")
     public ModelAndView sharePreview(
-            @PathVariable String qrCode) {
+            @PathVariable String qrCode,
+            @RequestParam(required = false) String itemId) {
 
         SharePreviewResponse preview =
-                publicService.getSharePreview(qrCode);
+                publicService.getSharePreview(qrCode, itemId);
 
         ModelAndView modelAndView =
                 new ModelAndView("public/share-preview");
@@ -89,16 +91,32 @@ public class PublicController {
                 preview.getDescription()
         );
 
-        String canonicalUrl =
-                preview.getPublicSlug() != null
-                        && !preview.getPublicSlug().isBlank()
-                        ? "https://" + preview.getPublicSlug() + "." + publicDomain
-                        : "https://" + publicDomain + "/q/" + qrCode;
+        String redirectUrl = "https://" + publicDomain + "/q/" + qrCode;
+        if (preview.getItemName() != null && !preview.getItemName().isBlank()) {
+            redirectUrl += "/menu?itemId=" +
+                    org.springframework.web.util.UriUtils.encodeQueryParam(
+                            itemId.trim(), java.nio.charset.StandardCharsets.UTF_8);
+        }
 
-        modelAndView.addObject(
-                "canonicalUrl",
-                canonicalUrl
-        );
+        String previewTitle = preview.getItemName() != null && !preview.getItemName().isBlank()
+                ? preview.getItemName() + " | " + preview.getBusinessName()
+                : preview.getBusinessName();
+        String previewDescription = preview.getItemDescription();
+        if (previewDescription == null || previewDescription.isBlank()) {
+            previewDescription = preview.getItemName() != null && !preview.getItemName().isBlank()
+                    ? "Check out " + preview.getItemName() + " at " + preview.getBusinessName() + " on ScanAura."
+                    : preview.getDescription();
+        }
+        String previewImageUrl = preview.getItemImageUrl() != null && !preview.getItemImageUrl().isBlank()
+                ? preview.getItemImageUrl()
+                : preview.getLogoUrl();
+
+        modelAndView.addObject("canonicalUrl", redirectUrl);
+        modelAndView.addObject("redirectUrl", redirectUrl);
+        modelAndView.addObject("previewTitle", previewTitle);
+        modelAndView.addObject("previewDescription", previewDescription);
+        modelAndView.addObject("previewImageUrl", previewImageUrl);
+        modelAndView.addObject("itemName", preview.getItemName());
 
         return modelAndView;
     }

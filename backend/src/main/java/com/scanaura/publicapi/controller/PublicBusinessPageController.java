@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -47,22 +48,23 @@ public class PublicBusinessPageController {
      * The reverse proxy must preserve the original Host header.
      */
     @GetMapping("/_business-page")
-    public ModelAndView businessPageFromSubdomain(HttpServletRequest request) {
+    public RedirectView businessPageFromSubdomain(HttpServletRequest request) {
         String slug = extractBusinessSlug(request.getServerName());
 
         if (slug == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
-        return renderBusinessPage(slug);
+        String qrCode = publicService.getDigitalQrCodeForPublicSlug(slug);
+        return new RedirectView("https://" + publicDomain + "/q/" + qrCode, true);
     }
 
     /**
-     * Also supports https://business.scanaura.in/business-slug as an alias.
-     * The canonical URL remains https://business-slug.scanaura.in/.
+     * Supports https://business.scanaura.in/{business-slug} as a short alias
+     * and redirects visitors to the existing Flutter QR route.
      */
     @GetMapping("/{slug}")
-    public ModelAndView businessPageFromPath(
+    public RedirectView businessPageFromPath(
             @PathVariable String slug,
             HttpServletRequest request
     ) {
@@ -71,7 +73,11 @@ public class PublicBusinessPageController {
                 || RESERVED_SUBDOMAINS.contains(normalized)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        return renderBusinessPage(normalized);
+        if (request.getServerName().equalsIgnoreCase("business." + publicDomain)) {
+            String qrCode = publicService.getDigitalQrCodeForPublicSlug(normalized);
+            return new RedirectView("https://" + publicDomain + "/q/" + qrCode, true);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)

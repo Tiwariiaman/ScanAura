@@ -18,7 +18,11 @@ public interface PublicService {
 
     SharePreviewResponse getSharePreview(String qrCode);
 
+    SharePreviewResponse getSharePreview(String qrCode, String itemId);
+
     SharePreviewResponse getPublicBusinessPage(String publicSlug);
+
+    String getDigitalQrCodeForPublicSlug(String publicSlug);
 
     List<Business> getBusinessesForSitemap();
 
