@@ -65,4 +65,21 @@ public class AiController {
 
     }
 
+    @PostMapping("/import-text")
+    public ResponseEntity<ApiResponse<String>> importTextMenu(
+            @Valid
+            @RequestBody
+            AiImportRequest request
+    ) {
+        aiService.importMenu(request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Menu imported successfully.",
+                        "Success"
+                )
+        );
+    }
+
 }
