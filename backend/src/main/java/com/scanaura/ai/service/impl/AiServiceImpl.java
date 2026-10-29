@@ -15,7 +15,6 @@ import com.scanaura.common.exception.BusinessException;
 import com.scanaura.common.util.SecurityUtil;
 import com.scanaura.subscription.entity.Subscription;
 import com.scanaura.subscription.repository.SubscriptionRepository;
-
 import com.scanaura.subscription.service.SubscriptionValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,13 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class AiServiceImpl implements AiService {
 
     private final AiClient aiClient;
-
     private final BusinessRepository businessRepository;
-
     private final CategoryRepository categoryRepository;
-
     private final CatalogRepository catalogRepository;
-
     private final SubscriptionValidationService subscriptionValidationService;
     private final SubscriptionRepository subscriptionRepository;
 
@@ -77,11 +72,41 @@ public class AiServiceImpl implements AiService {
         );
     }
 
+    /**
+     * Image/PDF AI menu import.
+     * The existing AI import limit still applies.
+     */
     @Override
     public void importMenu(AiImportRequest request) {
+        importMenuInternal(request, true);
+    }
+
+    /**
+     * Text menu import.
+     * No AI import quota is checked or consumed.
+     */
+    @Override
+    public void importTextMenu(AiImportRequest request) {
+        importMenuInternal(request, false);
+    }
+
+    /**
+     * Shared menu import logic.
+     *
+     * @param request             menu data to import
+     * @param enforceAiImportLimit true for image/PDF imports,
+     *                             false for text imports
+     */
+    private void importMenuInternal(
+            AiImportRequest request,
+            boolean enforceAiImportLimit
+    ) {
+
         subscriptionValidationService.validateActiveSubscription();
 
-        subscriptionValidationService.validateAiImportLimit();
+        if (enforceAiImportLimit) {
+            subscriptionValidationService.validateAiImportLimit();
+        }
 
         Business business = businessRepository
                 .findByOwner(SecurityUtil.getCurrentUser())
@@ -89,25 +114,20 @@ public class AiServiceImpl implements AiService {
                         new BusinessException("Business not found."));
 
         if (Boolean.TRUE.equals(request.getOverwriteExistingMenu())) {
-
             catalogRepository.deleteByBusiness(business);
-
             categoryRepository.deleteByBusiness(business);
-
         }
 
         int categoryOrder = 1;
-
         int catalogOrder = 1;
-
         int importedItems = 0;
 
         for (var aiCategory : request.getCategories()) {
 
             Category category = null;
 
-            if (aiCategory.getCategoryName() != null &&
-                    !aiCategory.getCategoryName().isBlank()) {
+            if (aiCategory.getCategoryName() != null
+                    && !aiCategory.getCategoryName().isBlank()) {
 
                 category = categoryRepository
                         .findByBusinessAndNameIgnoreCase(
@@ -117,9 +137,7 @@ public class AiServiceImpl implements AiService {
                         .orElse(null);
 
                 if (category == null) {
-
                     category = new Category();
-
                     category.setBusiness(business);
                     category.setName(aiCategory.getCategoryName());
                     category.setDisplayOrder(categoryOrder++);
@@ -130,8 +148,6 @@ public class AiServiceImpl implements AiService {
 
             for (var item : aiCategory.getItems()) {
 
-
-
                 if (item.getName() == null || item.getName().isBlank()) {
                     continue;
                 }
@@ -139,59 +155,51 @@ public class AiServiceImpl implements AiService {
                 if (catalogRepository.existsByBusinessAndNameIgnoreCase(
                         business,
                         item.getName())) {
-
                     continue;
-
                 }
 
                 Catalog catalog = new Catalog();
 
                 catalog.setBusiness(business);
                 catalog.setCategory(category);
-
                 catalog.setName(item.getName());
                 catalog.setDescription(item.getDescription());
-
                 catalog.setPrice(item.getPrice());
 
                 if (business.getBusinessType() == BusinessType.FOOD) {
-                    // For food businesses, missing classification defaults to vegetarian.
-                    // Explicit false from the menu is preserved as non-vegetarian.
-                    catalog.setVeg(item.getVeg() == null ? Boolean.TRUE : item.getVeg());
+                    // Default missing classification to vegetarian.
+                    // Preserve explicit false for non-vegetarian items.
+                    catalog.setVeg(
+                            item.getVeg() == null
+                                    ? Boolean.TRUE
+                                    : item.getVeg()
+                    );
                 } else {
-                    // Veg/non-veg is not applicable to non-food business types.
+                    // Veg/non-veg does not apply to other business types.
                     catalog.setVeg(null);
                 }
 
-
                 catalog.setAvailable(true);
-
                 catalog.setBestSeller(false);
-
                 catalog.setRecommended(false);
-
                 catalog.setDisplayOrder(catalogOrder++);
 
                 catalogRepository.save(catalog);
                 importedItems++;
-
             }
-
         }
-        Subscription subscription =
-                subscriptionRepository
-                        .findByBusiness(business)
-                        .orElseThrow(() ->
-                                new BusinessException("Subscription not found."));
 
+        Subscription subscription = subscriptionRepository
+                .findByBusiness(business)
+                .orElseThrow(() ->
+                        new BusinessException("Subscription not found."));
 
-        if (importedItems > 0) {
-            subscription.setAiImportUsed(subscription.getAiImportUsed() + 1);
+        // Only image/PDF imports consume the AI import quota.
+        if (enforceAiImportLimit && importedItems > 0) {
+            subscription.setAiImportUsed(
+                    subscription.getAiImportUsed() + 1
+            );
             subscriptionRepository.save(subscription);
         }
-
-        subscriptionRepository.save(subscription);
-
     }
-
 }

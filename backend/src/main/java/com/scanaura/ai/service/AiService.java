@@ -10,4 +10,5 @@ public interface AiService {
 
     void importMenu(AiImportRequest request);
 
+    void importTextMenu(AiImportRequest request);
 }

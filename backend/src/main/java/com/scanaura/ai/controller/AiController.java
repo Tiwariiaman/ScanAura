@@ -71,7 +71,7 @@ public class AiController {
             @RequestBody
             AiImportRequest request
     ) {
-        aiService.importMenu(request);
+        aiService.importTextMenu(request);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
