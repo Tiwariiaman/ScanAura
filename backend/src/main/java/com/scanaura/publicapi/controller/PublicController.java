@@ -7,14 +7,17 @@ import com.scanaura.publicapi.dto.PaymentResponse;
 import com.scanaura.publicapi.dto.SharePreviewResponse;
 import com.scanaura.publicapi.service.PublicService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriUtils;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/public")
@@ -29,73 +32,53 @@ public class PublicController {
     @GetMapping("/q/{qrCode}")
     public ResponseEntity<ApiResponse<LandingResponse>> landing(
             @PathVariable String qrCode) {
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Landing page fetched successfully.",
-                        publicService.getLandingPage(qrCode)
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Landing page fetched successfully.",
+                publicService.getLandingPage(qrCode)
+        ));
     }
 
     @GetMapping("/q/{qrCode}/menu")
     public ResponseEntity<ApiResponse<MenuResponse>> menu(
             @PathVariable String qrCode) {
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Menu fetched successfully.",
-                        publicService.getMenu(qrCode)
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Menu fetched successfully.",
+                publicService.getMenu(qrCode)
+        ));
     }
 
     @GetMapping("/q/{qrCode}/payment")
     public ResponseEntity<ApiResponse<PaymentResponse>> payment(
             @PathVariable String qrCode) {
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Payment details fetched successfully.",
-                        publicService.getPaymentDetails(qrCode)
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Payment details fetched successfully.",
+                publicService.getPaymentDetails(qrCode)
+        ));
     }
 
+    /**
+     * Server-rendered social metadata endpoint. Share links should target this API URL
+     * so crawlers receive item name/image before the browser is redirected to Flutter.
+     */
     @GetMapping("/share/{qrCode}")
     public ModelAndView sharePreview(
             @PathVariable String qrCode,
             @RequestParam(required = false) String itemId) {
+        SharePreviewResponse preview = publicService.getSharePreview(qrCode, itemId);
+        ModelAndView view = new ModelAndView("public/share-preview");
 
-        SharePreviewResponse preview =
-                publicService.getSharePreview(qrCode, itemId);
+        view.addObject("businessName", preview.getBusinessName());
+        view.addObject("logoUrl", preview.getLogoUrl());
+        view.addObject("description", preview.getDescription());
 
-        ModelAndView modelAndView =
-                new ModelAndView("public/share-preview");
-
-        modelAndView.addObject(
-                "businessName",
-                preview.getBusinessName()
-        );
-
-        modelAndView.addObject(
-                "logoUrl",
-                preview.getLogoUrl()
-        );
-
-        modelAndView.addObject(
-                "description",
-                preview.getDescription()
-        );
-
-        String redirectUrl = "https://" + publicDomain + "/q/" + qrCode;
+        String encodedQrCode = UriUtils.encodePathSegment(qrCode, StandardCharsets.UTF_8);
+        String redirectUrl = "https://" + publicDomain + "/q/" + encodedQrCode;
         if (preview.getItemName() != null && !preview.getItemName().isBlank()) {
-            redirectUrl += "/menu?itemId=" +
-                    org.springframework.web.util.UriUtils.encodeQueryParam(
-                            itemId.trim(), java.nio.charset.StandardCharsets.UTF_8);
+            String encodedItemId = UriUtils.encodeQueryParam(itemId.trim(), StandardCharsets.UTF_8);
+            redirectUrl += "/menu?itemId=" + encodedItemId;
         }
 
         String previewTitle = preview.getItemName() != null && !preview.getItemName().isBlank()
@@ -111,13 +94,20 @@ public class PublicController {
                 ? preview.getItemImageUrl()
                 : preview.getLogoUrl();
 
-        modelAndView.addObject("canonicalUrl", redirectUrl);
-        modelAndView.addObject("redirectUrl", redirectUrl);
-        modelAndView.addObject("previewTitle", previewTitle);
-        modelAndView.addObject("previewDescription", previewDescription);
-        modelAndView.addObject("previewImageUrl", previewImageUrl);
-        modelAndView.addObject("itemName", preview.getItemName());
+        // Keep the canonical URL aligned with the API preview URL being shared; the final
+        // destination remains redirectUrl and is used by the HTML meta refresh.
+        String canonicalUrl = "https://api.scanaura.in/api/public/share/" + encodedQrCode;
+        if (preview.getItemName() != null && !preview.getItemName().isBlank()) {
+            canonicalUrl += "?itemId="
+                    + UriUtils.encodeQueryParam(itemId.trim(), StandardCharsets.UTF_8);
+        }
 
-        return modelAndView;
+        view.addObject("canonicalUrl", canonicalUrl);
+        view.addObject("redirectUrl", redirectUrl);
+        view.addObject("previewTitle", previewTitle);
+        view.addObject("previewDescription", previewDescription);
+        view.addObject("previewImageUrl", previewImageUrl);
+        view.addObject("itemName", preview.getItemName());
+        return view;
     }
 }

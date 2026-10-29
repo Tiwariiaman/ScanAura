@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface LoyaltyCustomerRepository
         extends JpaRepository<LoyaltyCustomer, UUID> {
 
+    java.util.List<LoyaltyCustomer> findAllByBusinessIdOrderByCustomerNameAsc(UUID businessId);
+
     Optional<LoyaltyCustomer> findByBusinessIdAndMobileNumber(
             UUID businessId,
             String mobileNumber

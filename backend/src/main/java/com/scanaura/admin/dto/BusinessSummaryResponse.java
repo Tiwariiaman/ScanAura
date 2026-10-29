@@ -30,6 +30,12 @@ public class BusinessSummaryResponse {
 
     private String currentPlan;
 
+    private String businessType;
+
+    private String referralPartnerName;
+
+    private String referralPin;
+
     private Long todayScans;
 
     private Long yesterdayScans;

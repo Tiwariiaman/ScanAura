@@ -3,6 +3,8 @@
     import com.scanaura.admin.dto.*;
     import com.scanaura.admin.service.AdminService;
     import com.scanaura.auth.entity.User;
+import com.scanaura.referral.entity.ReferralPartner;
+import com.scanaura.referral.repository.ReferralPartnerRepository;
     import com.scanaura.auth.repository.UserRepository;
     import com.scanaura.business.entity.Business;
     import com.scanaura.business.repository.BusinessRepository;
@@ -44,6 +46,7 @@
 
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
+        private final ReferralPartnerRepository referralPartnerRepository;
 
         @Override
         public DashboardResponse getDashboard() {
@@ -109,6 +112,7 @@
         }
 
         @Override
+        @Transactional
         public List<BusinessSummaryResponse> getAllBusinesses() {
 
             return businessRepository
@@ -119,6 +123,7 @@
         }
 
         @Override
+        @Transactional
         public List<BusinessSummaryResponse> searchBusinesses(
                 String keyword
         ) {
@@ -195,6 +200,30 @@
                                     business
                             );
 
+            User owner = business.getOwner();
+            ReferralPartner partner = owner != null
+                    ? owner.getReferralPartner()
+                    : null;
+
+            // Older registrations may have the PIN saved without the partner relation.
+            if (partner == null && owner != null
+                    && owner.getRegistrationPin() != null
+                    && !owner.getRegistrationPin().isBlank()) {
+                partner = referralPartnerRepository
+                        .findByPin(owner.getRegistrationPin())
+                        .orElse(null);
+            }
+
+            String createdByName = partner != null
+                    ? partner.getName()
+                    : owner != null && owner.isSuperAdminPinUsed()
+                        ? "Super Admin"
+                        : null;
+
+            String createdByPin = partner != null
+                    ? partner.getPin()
+                    : owner != null ? owner.getRegistrationPin() : null;
+
             return BusinessSummaryResponse.builder()
 
                     .businessId(
@@ -236,6 +265,15 @@
                                     ? subscription.getPlan().getName()
                                     : null
                     )
+
+                    .businessType(
+                            business.getBusinessType() != null
+                                    ? business.getBusinessType().name()
+                                    : null
+                    )
+
+                    .referralPartnerName(createdByName)
+                    .referralPin(createdByPin)
 
                     .todayScans(todayScans)
 

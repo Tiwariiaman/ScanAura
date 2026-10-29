@@ -12,6 +12,8 @@ import com.scanaura.auth.service.EmailService;
 import com.scanaura.common.exception.BusinessException;
 import com.scanaura.auth.repository.UserRepository;
 import com.scanaura.auth.service.AuthService;
+import com.scanaura.referral.entity.ReferralPartner;
+import com.scanaura.referral.repository.ReferralPartnerRepository;
 import com.scanaura.common.constants.AppConstants;
 import com.scanaura.common.enums.UserRole;
 import com.scanaura.common.security.JwtService;
@@ -30,6 +32,8 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+
+    private final ReferralPartnerRepository referralPartnerRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -56,6 +60,23 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
+
+        // Enforce Admin PIN on the server. Frontend validation is not security.
+        String submittedPin = request.getAdminPin() == null
+                ? ""
+                : request.getAdminPin().trim().toUpperCase(java.util.Locale.ROOT);
+
+        if (!submittedPin.matches("^SA\\d{4}$")) {
+            throw new BusinessException("A valid Admin PIN is required.");
+        }
+
+        boolean superAdminPinUsed = "SA1203".equals(submittedPin);
+        ReferralPartner referralPartner = null;
+        if (!superAdminPinUsed) {
+            referralPartner = referralPartnerRepository.findByPinAndActiveTrue(submittedPin)
+                    .orElseThrow(() -> new BusinessException(
+                            "Invalid or inactive Admin PIN. Enter SA1203 or a valid active partner PIN."));
+        }
 
         /*
          * Email is now OPTIONAL.
@@ -106,6 +127,13 @@ public class AuthServiceImpl implements AuthService {
         user.setMobile(
                 request.getMobile()
         );
+
+        // Persist the PIN and partner attribution as part of account creation.
+        user.setRegistrationPin(submittedPin);
+        user.setSuperAdminPinUsed(superAdminPinUsed);
+        if (referralPartner != null) {
+            user.setReferralPartner(referralPartner);
+        }
 
         // Encrypt password before saving
         final String encryptedPassword =

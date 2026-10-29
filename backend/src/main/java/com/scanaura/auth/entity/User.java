@@ -2,6 +2,7 @@ package com.scanaura.auth.entity;
 
 import com.scanaura.common.entity.BaseEntity;
 import com.scanaura.common.enums.UserRole;
+import com.scanaura.referral.entity.ReferralPartner;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,5 +37,15 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean deleted = false;
+
+    @Column(name = "registration_pin", length = 6)
+    private String registrationPin;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referral_partner_id")
+    private ReferralPartner referralPartner;
+
+    @Column(name = "super_admin_pin_used", nullable = false)
+    private boolean superAdminPinUsed = false;
 
 }

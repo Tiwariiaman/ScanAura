@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -22,6 +23,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service
 @RequiredArgsConstructor
 public class ScratchService {
+
+    private static final ZoneId INDIA_ZONE = ZoneId.of("Asia/Kolkata");
 
     private final ScratchCardRepository cardRepository;
     private final ScratchRewardRepository rewardRepository;
@@ -51,11 +54,13 @@ public class ScratchService {
         card.setEnabled(Boolean.TRUE.equals(request.getEnabled()));
         card = cardRepository.save(card);
 
-        // Reward configuration can be replaced at any time. Plays store a snapshot,
-        // so previously won coupons keep their original reward name.
+        // Reward configuration can be replaced. Existing plays retain their reward snapshot.
         rewardRepository.deleteAllByCardId(card.getId());
-        for (int i = 0; i < request.getRewards().size(); i++) {
-            ScratchRewardInput input = request.getRewards().get(i);
+        List<ScratchRewardInput> inputs = request.getRewards() == null
+                ? List.of()
+                : request.getRewards();
+        for (int i = 0; i < inputs.size(); i++) {
+            ScratchRewardInput input = inputs.get(i);
             if (input.getName() == null || input.getName().isBlank()) {
                 throw new BusinessException("Reward names cannot be empty.");
             }
@@ -78,26 +83,36 @@ public class ScratchService {
 
     @Transactional
     public ScratchPlayResponse play(UUID businessId, ScratchPlayRequest request) {
-        ScratchCard card = cardRepository.findByBusinessId(businessId)
+        // Lock this business' card row first. Requests for another business use a different lock,
+        // so the same phone may play at multiple businesses on the same IST calendar day.
+        ScratchCard card = cardRepository.findByBusinessIdForUpdate(businessId)
                 .orElseThrow(() -> new BusinessException("Scratch Card is not configured for this business."));
         if (!card.isEnabled()) {
             throw new BusinessException("Scratch Card is currently unavailable.");
         }
+
         List<ScratchReward> rewards = rewardRepository.findAllByCardIdOrderByDisplayOrderAsc(card.getId());
         if (rewards.isEmpty()) {
             throw new BusinessException("Scratch Card has no rewards configured.");
         }
 
-        // Normalize phone numbers so spaces, brackets and hyphens cannot bypass the cooldown.
         String normalizedMobile = normalizeMobile(request.getMobileNumber());
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-        LocalDateTime cooldownStart = now.minusHours(24);
-        ScratchPlay latestPlay = playRepository
-                .findTopByMobileNumberOrderByPlayedAtDesc(normalizedMobile)
-                .orElse(null);
-        if (latestPlay != null && latestPlay.getPlayedAt() != null
-                && latestPlay.getPlayedAt().isAfter(cooldownStart)) {
-            throw new BusinessException("You can play a ScanAura Scratch Card only once every 24 hours.");
+
+        // Fixed IST calendar windows, not a rolling 24-hour cooldown: reset at midnight India time.
+        LocalDate todayInIndia = LocalDate.now(INDIA_ZONE);
+        LocalDateTime dayStart = todayInIndia.atStartOfDay();
+        LocalDateTime nextDayStart = todayInIndia.plusDays(1).atStartOfDay();
+        boolean alreadyPlayedToday = playRepository
+                .existsByBusinessIdAndMobileNumberAndPlayedAtGreaterThanEqualAndPlayedAtLessThan(
+                        businessId,
+                        normalizedMobile,
+                        dayStart,
+                        nextDayStart
+                );
+        if (alreadyPlayedToday) {
+            throw new BusinessException(
+                    "This mobile number has already played at this business today. Try again after midnight IST."
+            );
         }
 
         // Every configured reward has an equal chance. No probability settings are exposed.
@@ -113,20 +128,21 @@ public class ScratchService {
         play.setCouponCode("SA-" + UUID.randomUUID().toString().replace("-", "")
                 .substring(0, 10).toUpperCase(Locale.ROOT));
         play.setStatus(ScratchPlay.PlayStatus.WON);
-        play.setPlayedAt(now);
+        play.setPlayedAt(LocalDateTime.now(INDIA_ZONE));
         play = playRepository.save(play);
         return toPlayResponse(play);
     }
 
     @Transactional
     public ScratchPlayReportResponse redeem(UUID businessId, UUID playId) {
+        // A coupon is redeemable only by the business that issued it.
         ScratchPlay play = playRepository.findPlayForUpdate(playId, businessId)
                 .orElseThrow(() -> new BusinessException("Scratch Card entry not found for this business."));
         if (play.getStatus() == ScratchPlay.PlayStatus.REDEEMED) {
             throw new BusinessException("This coupon has already been redeemed.");
         }
         play.setStatus(ScratchPlay.PlayStatus.REDEEMED);
-        play.setRedeemedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+        play.setRedeemedAt(LocalDateTime.now(INDIA_ZONE));
         play = playRepository.save(play);
         return toReportResponse(play);
     }
@@ -142,8 +158,12 @@ public class ScratchService {
         // Treat common Indian formatting variants as the same mobile number.
         if (digits.length() == 12 && digits.startsWith("91")) {
             digits = digits.substring(2);
+        } else if (digits.length() == 13 && digits.startsWith("910")) {
+            digits = digits.substring(3);
         } else if (digits.length() == 11 && digits.startsWith("0")) {
             digits = digits.substring(1);
+        } else if (digits.length() == 14 && digits.startsWith("0091")) {
+            digits = digits.substring(4);
         }
         if (digits.length() < 7 || digits.length() > 15) {
             throw new BusinessException("Enter a valid mobile number.");

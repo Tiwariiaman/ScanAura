@@ -29,4 +29,8 @@ public class RegisterRequest {
     @Size(min = 8, max = 20)
     private String password;
 
+    @NotBlank(message = "Admin PIN is required")
+    @Pattern(regexp = "^SA\\d{4}$", message = "Admin PIN must be in the format SA followed by 4 digits")
+    private String adminPin;
+
 }

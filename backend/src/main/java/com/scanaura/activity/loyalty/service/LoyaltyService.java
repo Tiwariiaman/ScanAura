@@ -716,6 +716,9 @@ public class LoyaltyService {
                         )
                         .qrToken(UUID.randomUUID())
                         .status(LoyaltyClaim.ClaimStatus.PENDING)
+                        // New claims are reserved, not deducted, until the
+                        // business scans and grants the reward QR.
+                        .pointsDeducted(false)
                         .build();
 
         LoyaltyClaim savedClaim =

@@ -2,6 +2,7 @@ package com.scanaura.activity.loyalty.controller;
 
 import com.scanaura.activity.loyalty.dto.*;
 import com.scanaura.activity.loyalty.service.LoyaltyService;
+import com.scanaura.activity.loyalty.repository.LoyaltyCustomerRepository;
 import com.scanaura.business.entity.Business;
 import com.scanaura.business.repository.BusinessRepository;
 import com.scanaura.auth.entity.User;
@@ -23,6 +24,7 @@ public class LoyaltyController {
 
     private final LoyaltyService loyaltyService;
     private final BusinessRepository businessRepository;
+    private final LoyaltyCustomerRepository loyaltyCustomerRepository;
 
 
     // ============================================================
@@ -62,6 +64,31 @@ public class LoyaltyController {
                         )
                 )
         );
+    }
+
+
+    // ============================================================
+    // BUSINESS CUSTOMER DIRECTORY
+    // ============================================================
+
+    /** Returns only loyalty customers belonging to the authenticated business. */
+    @GetMapping("/customers")
+    public ResponseEntity<LoyaltyApiResponse<List<LoyaltyCustomerResponse>>> getBusinessCustomers() {
+        UUID businessId = getBusinessId();
+        List<LoyaltyCustomerResponse> customers = loyaltyCustomerRepository
+                .findAllByBusinessIdOrderByCustomerNameAsc(businessId)
+                .stream()
+                .map(customer -> LoyaltyCustomerResponse.builder()
+                        .id(customer.getId())
+                        .businessId(customer.getBusinessId())
+                        .customerName(customer.getCustomerName())
+                        .mobileNumber(customer.getMobileNumber())
+                        .pointsBalance(customer.getPointsBalance())
+                        .totalPointsEarned(customer.getTotalPointsEarned())
+                        .totalPointsRedeemed(customer.getTotalPointsRedeemed())
+                        .build())
+                .toList();
+        return ResponseEntity.ok(LoyaltyApiResponse.success(customers));
     }
 
 

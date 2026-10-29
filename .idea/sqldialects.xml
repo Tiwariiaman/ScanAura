@@ -1,8 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V20__make_user_email_optional.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V23__purchase_based_loyalty.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V25__create_scratch_card.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V26__index_scratch_mobile_cooldown.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V27__backfill_business_public_slugs.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V28__allow_catalog_price_to_be_null.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V29__add_whatsapp_order_service_options.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V30__allow_catalog_veg_to_be_null.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V31__extend_refresh_token_persistence.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V32__fix_half_yearly_billing_and_plan_pricing.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V33__scratch_daily_limit_per_business.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V34__add_referral_partner_pins.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V6__add_business_feature_controls.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V7__complete_business_feature_controls.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/backend/src/main/resources/db/migration/V9__add_social_links.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V18__make_user_email_optional.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V19__add_business_public_slug.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V21__purchase_based_loyalty.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V22__track_loyalty_claim_point_deduction.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V23__create_scratch_card.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V24__index_scratch_mobile_cooldown.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V25__backfill_business_public_slugs.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V26__allow_catalog_price_to_be_null.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V27__add_whatsapp_order_service_options.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V28__allow_catalog_veg_to_be_null.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V29__extend_refresh_token_persistence.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V30__fix_half_yearly_billing_and_plan_pricing.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V31__scratch_daily_limit_per_business.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/src/main/resources/production-migration/V32__add_referral_partner_pins.sql" dialect="GenericSQL" />
   </component>
 </project>

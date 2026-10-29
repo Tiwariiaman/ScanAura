@@ -30,5 +30,5 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
 
     List<Business> findAllByPublicSlugIsNotNullAndActiveTrueOrderByBusinessNameAsc();
 
-
+    long countByOwner_ReferralPartner_Id(UUID referralPartnerId);
 }
